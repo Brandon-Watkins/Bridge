@@ -1,0 +1,106 @@
+﻿
+<Window x:Class="BridgeApp.TiledBiddingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BridgeApp"
+        mc:Ignorable="d"
+        Title="Bidding" Height="370" Width="535" MinWidth="400" MinHeight="300" MaxWidth="800" MaxHeight="600" Closing="BiddingWindow_Closing" Loaded="BiddingWindow_Loaded">
+    <Grid x:Name="root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
+            <RowDefinition/>
+            <RowDefinition Height="60"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0">
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="Help" Click="Help_Click"/>
+            </Menu>
+        </DockPanel>
+        <Grid x:Name="BiddingTable" Grid.Row="1">
+            
+            <Grid.RowDefinitions>
+                <RowDefinition Height="0"/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0"/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox Text="1" Grid.Row="1" Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="36"/>
+            <TextBox Text="2" Grid.Row="2" Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="36"/>
+            <TextBox Text="3" Grid.Row="3" Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="36"/>
+            <TextBox Text="4" Grid.Row="4" Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="36"/>
+            <TextBox Text="5" Grid.Row="5" Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="36"/>
+            <TextBox Text="6" Grid.Row="6" Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="36"/>
+            <TextBox Text="7" Grid.Row="7" Grid.Column="0" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="36"/>
+
+            <Button x:Name="_1C" Content="1 Club"     Grid.Row="1" Grid.Column="1" Click="Tile_Click"/>
+            <Button x:Name="_1D" Content="1 Diamond"  Grid.Row="1" Grid.Column="2" Click="Tile_Click"/>
+            <Button x:Name="_1H" Content="1 Heart"    Grid.Row="1" Grid.Column="3" Click="Tile_Click"/>
+            <Button x:Name="_1S" Content="1 Spade"    Grid.Row="1" Grid.Column="4" Click="Tile_Click"/>
+            <Button x:Name="_1N" Content="1 No Trump" Grid.Row="1" Grid.Column="5" Click="Tile_Click"/>
+
+            <Button x:Name="_2C" Content="2 Clubs"     Grid.Row="2" Grid.Column="1" Click="Tile_Click"/>
+            <Button x:Name="_2D" Content="2 Diamonds"  Grid.Row="2" Grid.Column="2" Click="Tile_Click"/>
+            <Button x:Name="_2H" Content="2 Hearts"    Grid.Row="2" Grid.Column="3" Click="Tile_Click"/>
+            <Button x:Name="_2S" Content="2 Spades"    Grid.Row="2" Grid.Column="4" Click="Tile_Click"/>
+            <Button x:Name="_2N" Content="2 No Trump" Grid.Row="2" Grid.Column="5" Click="Tile_Click"/>
+
+            <Button x:Name="_3C" Content="3 Clubs"     Grid.Row="3" Grid.Column="1" Click="Tile_Click"/>
+            <Button x:Name="_3D" Content="3 Diamonds"  Grid.Row="3" Grid.Column="2" Click="Tile_Click"/>
+            <Button x:Name="_3H" Content="3 Hearts"    Grid.Row="3" Grid.Column="3" Click="Tile_Click"/>
+            <Button x:Name="_3S" Content="3 Spades"    Grid.Row="3" Grid.Column="4" Click="Tile_Click"/>
+            <Button x:Name="_3N" Content="3 No Trump" Grid.Row="3" Grid.Column="5" Click="Tile_Click"/>
+
+            <Button x:Name="_4C" Content="4 Clubs"     Grid.Row="4" Grid.Column="1" Click="Tile_Click"/>
+            <Button x:Name="_4D" Content="4 Diamonds"  Grid.Row="4" Grid.Column="2" Click="Tile_Click"/>
+            <Button x:Name="_4H" Content="4 Hearts"    Grid.Row="4" Grid.Column="3" Click="Tile_Click"/>
+            <Button x:Name="_4S" Content="4 Spades"    Grid.Row="4" Grid.Column="4" Click="Tile_Click"/>
+            <Button x:Name="_4N" Content="4 No Trumps" Grid.Row="4" Grid.Column="5" Click="Tile_Click"/>
+
+            <Button x:Name="_5C" Content="5 Clubs"     Grid.Row="5" Grid.Column="1" Click="Tile_Click"/>
+            <Button x:Name="_5D" Content="5 Diamonds"  Grid.Row="5" Grid.Column="2" Click="Tile_Click"/>
+            <Button x:Name="_5H" Content="5 Hearts"    Grid.Row="5" Grid.Column="3" Click="Tile_Click"/>
+            <Button x:Name="_5S" Content="5 Spades"    Grid.Row="5" Grid.Column="4" Click="Tile_Click"/>
+            <Button x:Name="_5N" Content="5 No Trump" Grid.Row="5" Grid.Column="5" Click="Tile_Click"/>
+
+            <Button x:Name="_6C" Content="6 Clubs"     Grid.Row="6" Grid.Column="1" Click="Tile_Click"/>
+            <Button x:Name="_6D" Content="6 Diamonds"  Grid.Row="6" Grid.Column="2" Click="Tile_Click"/>
+            <Button x:Name="_6H" Content="6 Hearts"    Grid.Row="6" Grid.Column="3" Click="Tile_Click"/>
+            <Button x:Name="_6S" Content="6 Spades"    Grid.Row="6" Grid.Column="4" Click="Tile_Click"/>
+            <Button x:Name="_6N" Content="6 No Trump" Grid.Row="6" Grid.Column="5" Click="Tile_Click" />
+            <Button x:Name="_7C" Content="7 Clubs"     Grid.Row="7" Grid.Column="1" Click="Tile_Click"/>
+            <Button x:Name="_7D" Content="7 Diamonds"  Grid.Row="7" Grid.Column="2" Click="Tile_Click"/>
+            <Button x:Name="_7H" Content="7 Hearts"    Grid.Row="7" Grid.Column="3" Click="Tile_Click"/>
+            <Button x:Name="_7S" Content="7 Spades"    Grid.Row="7" Grid.Column="4" Click="Tile_Click"/>
+            <Button x:Name="_7N" Content="7 No Trump" Grid.Row="7" Grid.Column="5" Click="Tile_Click" />
+        </Grid>
+        <Grid x:Name="BiddingUtil" Grid.Row="2" Grid.ColumnSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="txtWaiting" Text="Waiting for bid from player...: " HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0"/>
+            <TextBlock x:Name="txtHighestBid" Text="Highest bid: " HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1"/>
+            <Button x:Name="btnBid" Content="Bid" Grid.Row="1" Grid.Column="0" Click="Bid_Click"/>
+            <Button x:Name="btnPass" Content="Pass" Grid.Row="1" Grid.Column="1" Click="Pass_Click"/>
+        </Grid>
+    </Grid>
+</Window>

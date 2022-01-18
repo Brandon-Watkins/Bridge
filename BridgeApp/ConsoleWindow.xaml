@@ -1,0 +1,22 @@
+﻿<Window x:Class="BridgeApp.BridgeConsole"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BridgeApp"
+        mc:Ignorable="d"
+        Title="Bridge Log" Height="312" Width="387" MinWidth="350" MinHeight="300" Closing="ConsoleWindow_Closing">
+    <Grid x:Name="gridMain">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0">
+            <Menu DockPanel.Dock="Top">
+            </Menu>
+        </DockPanel>
+        <Grid x:Name="gridText" Grid.Row="1">
+            <TextBlock x:Name="txtLog" HorizontalAlignment="Stretch" Text="TextBlock" TextWrapping="Wrap" VerticalAlignment="Stretch" FontSize="14" Background="#FF1F1F1F" Foreground="White"/>
+        </Grid>
+    </Grid>
+</Window>
