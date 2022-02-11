@@ -1,27 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace ISU_Bridge
 {
     public class Contract
     {
-        public int player;
-        public Card.face suit;
-        public int numTricks;
-        public int numPassed;
-        public bool hasOneBid = false;
 
-        public bool isValidBid(Card.face f, int num)
+        public int Player { get; set; }
+        public Card.Face Suit { get; set; }
+        public int NumTricks { get; set; }
+        public int NumPassed { get; private set; }
+        public bool HasOneBid { get; private set; } = false;
+        
+        /// <summary>
+        /// 
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="dealer"></param>
+        /// <returns></returns>
+        public Contract Reset(int dealer = -1)
         {
-            if (num < 1 || num > 7)
-                return false;
-            else if (num < numTricks)
-                return false;
-            else if (num == numTricks && f <= suit)
-                return false;
-            else
-                return true;
+            //Player = dealer;
+            if (dealer != -1) Player = dealer;
+            else Player = 0;
+            Suit = Card.Face.Hearts;
+            NumTricks = 0;
+            NumPassed = 0;
+            HasOneBid = false;
+            return this;
+        }
+
+        /// <summary>
+        /// 
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="suit"></param>
+        /// <param name="bidValue"></param>
+        /// <returns></returns>
+        public Contract Bid(int playerIndex, Card.Face suit, int bidValue)
+        {
+            Player = playerIndex;
+            Suit = suit;
+            NumTricks = bidValue;
+            NumPassed = 0;
+            HasOneBid = true;
+            return this;
+        }
+
+        /// <summary>
+        /// 
+        /// Brandon Watkins
+        /// </summary>
+        /// <returns></returns>
+        public Contract Pass()
+        {
+            NumPassed++;
+            return this;
         }
     }
 }

@@ -1,174 +1,65 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-// Class created by Delaney Moore unless stated otherwise by function/variable
+﻿using System.Collections.Generic;
+using System;
 
 namespace ISU_Bridge
 {
     public static class Table
     {
-        // th
-        static private List<Player> _players;
-        static private Deck _deck;
-        static private Scoreboard _scoreboard;
 
-        //dm
-        // private  variables
-        static private Card.face _trumpSuit;
-        static private Card[] _cardsPlayed = new Card[4];
-        static private Contract _winningBid;//maybe stored in game class, tyler creates a singleton
-        static private List<string> _currentBids = new List<string>();
-        static private int _northSouthScore = 0;
-        static private int _eastWestScore = 0;
-        static private int _northSouthGamesWon = 0;
-        static private int _eastWestGamesWon = 0;
-        static private int _currentPlayerIndex; //index of players 
-        static private int _leadPlayerIndex; //index of person who lead the hand
-        static private Team _northSouth;
-        static private Team _eastWest;
-        static private List<Team> _teams = new List<Team>() { northSouth, eastWest };
+        public static Card.Face TrumpSuit => Game.Instance.Contract.Suit;
+        public static Card[] CardsPlayed { get; set; } = new Card[4];
+        public static int CurrentPlayerIndex { get; set; }
+        public static int LeadPlayerIndex { get; set; }
+        public static Player CurrentPlayer => Players[CurrentPlayerIndex];
+        public static List<Player> Players { get; private set; }
+        public static Deck Deck { get; set; }
+        public static Scoreboard Scoreboard { get; set; }
+        public static Team NorthSouth { get; private set; }
+        public static Team EastWest { get; private set; }
+        public static List<Team> Teams { get; private set; } = new List<Team>() { NorthSouth, EastWest };
+        public static int DealerIndex { get; private set; }
+        public static Game Game => Game.Instance;
 
-
-        static public void initialize()
+        public static void Initialize()
         {
-            players = new List<Player>();
-            players.Add(new Real_Player("North (YOU)"));
-            players.Add(new AI_Player("East"));
-            players.Add(new AI_Player("South"));
-            players.Add(new AI_Player("West"));
-
-            _northSouth = new Team(players[0], players[2]);
-            _eastWest = new Team(players[1], players[3]);
-            _teams[0] = _northSouth;
-            _teams[1] = _eastWest;
-            _scoreboard = new Scoreboard();
-        }
-        // public variables
-        static public Card.face trumpSuit
-        {
-            get { return Game.instance.contract.suit; }
-        }
-        static public Card[] cardsPlayed
-        {
-            get { return _cardsPlayed; }
-            set { _cardsPlayed = value; }
-        }
-        static public Contract winningBid
-        {
-            get { return _winningBid; }
-            set { _winningBid = value; }
-        }
-        static public List<string> currentBids
-        {
-            get { return _currentBids; }
-            set { _currentBids = value; }
-        }
-        static public int northSouthScore
-        {
-            get { return _northSouthScore; }
-            set { _northSouthScore = value; }
-        }
-        static public int eastWestScore
-        {
-            get { return _eastWestScore; }
-            set { _eastWestScore = value; }
-        }
-        static public int northSouthGamesWon
-        {
-            get { return _northSouthGamesWon; }
-            set { _northSouthGamesWon = value; }
-        }
-        static public int eastWestGamesWon
-        {
-            get { return _eastWestGamesWon; }
-            set { _eastWestGamesWon = value; }
-        }
-        static public int currentPlayerIndex
-        {
-            get { return _currentPlayerIndex; }
-            set { _currentPlayerIndex = value; }
-        }
-        static public int leadPlayerIndex
-        {
-            get { return _leadPlayerIndex; }
-            set { _leadPlayerIndex = value; }
-        }
-        static public Player currentPlayer
-        {
-            get { return players[currentPlayerIndex]; }
-        }
-        static public List<Player> players
-        {
-            get { return _players; }
-            set { _players = value; }
-        }
-        static public Deck deck
-        {
-            get { return _deck; }
-            set { _deck = value; }
-        }
-        static public Scoreboard scoreboard
-        {
-            get { return _scoreboard; }
-            set { _scoreboard = value; }
-        }
-        static public Team northSouth
-        {
-            get { return _northSouth; }
-            set { _northSouth = value; }
-        }
-        static public Team eastWest
-        {
-            get { return _eastWest; }
-            set { _eastWest = value; }
-        }
-        static public List<Team> teams
-        {
-            get { return _teams; }
-            set { _teams = value; }
-        }
-        //functions
-
-        static public Game game { get { return Game.instance; } }
-
-        static public int updateCurrentPlayer()
-        {
-            if (currentPlayerIndex == 3)
+            Players = new List<Player>
             {
-                currentPlayerIndex = 0;
-                return 0;
-            }
-            else
-            {
-                currentPlayerIndex += 1;
-                return currentPlayerIndex;
-            }
+                new Real_Player("North (YOU)"),
+                new AI_Player("East"),
+                new AI_Player("South"),
+                new AI_Player("West")
+            };
+
+            NorthSouth = new Team(Players[0], Players[2]);
+            EastWest = new Team(Players[1], Players[3]);
+            Teams[0] = NorthSouth;
+            Teams[1] = EastWest;
+            Scoreboard = new Scoreboard();
+
+            // Gives a random dealer for the first hand (equivalent to players picking a card, with highest card = dealer)
+            Random random = new Random();
+            DealerIndex = random.Next(0, 4);
         }
 
-
-        /*static public bool determineBid(string input)
+        /// <summary>
+        /// Increments current player index.
+        /// Brandon Watkins
+        /// </summary>
+        /// <returns>(int) Index of the new current player</returns>
+        public static int NextPlayer()
         {
-            if (input != "PASS") // What should our pass look like, empty? pass?
-            {
-                _winningBid = input;
-                _passBidCount = 0;
-                return false;
-            }
-            else
-            {
-                _passBidCount += 1;
-                if (_passBidCount == 3)
-                {
-                    _passBidCount = 0;
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-        }*/
+            return CurrentPlayerIndex = (CurrentPlayerIndex + 1) % 4;
+        }
+
+        /// <summary>
+        /// Increments dealer's player index, and sets the current player to dealer.
+        /// Brandon Watkins
+        /// </summary>
+        /// <returns>(int) Index of the new dealer</returns>
+        public static int NextDealer() {
+            DealerIndex = (DealerIndex + 1) % 4;
+            CurrentPlayerIndex = DealerIndex;
+            return DealerIndex;
+        }
     }
 }

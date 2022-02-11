@@ -23,10 +23,10 @@ namespace BridgeApp
     {
 
 
-        public event Action<Card.face, int> onBidPlaced;
+        public event Action<Card.Face, int> onBidPlaced;
         public event Action onPass;
 
-        private Card.face lastBidFace = Card.face.NoTrump;
+        private Card.Face lastBidFace = Card.Face.NoTrump;
         private int lastBidNum = -1;
 
         int currentBid =1;
@@ -48,18 +48,18 @@ namespace BridgeApp
         //so clearly the way it will need to work with this function is you bid and when the final bid has been tallied it will close the window
         private void Bid_Click(object sender, RoutedEventArgs e)
         {
-            Card.face bidFace = Card.face.NoTrump;
+            Card.Face bidFace = Card.Face.NoTrump;
 
             if ((bool)rbHearts.IsChecked)
-                bidFace = Card.face.Hearts;
+                bidFace = Card.Face.Hearts;
             else if ((bool)rbClubs.IsChecked)
-                bidFace = Card.face.Clubs;
+                bidFace = Card.Face.Clubs;
             else if ((bool)rbDiamonds.IsChecked)
-                bidFace = Card.face.Diamonds;
+                bidFace = Card.Face.Diamonds;
             else if ((bool)rbSpades.IsChecked)
-                bidFace = Card.face.Spades;
+                bidFace = Card.Face.Spades;
             else if ((bool)rbNoSuit.IsChecked)
-                bidFace = Card.face.NoTrump;
+                bidFace = Card.Face.NoTrump;
             else
                 MessageBox.Show("nothing was checked");
 
@@ -94,7 +94,7 @@ namespace BridgeApp
             onPass?.Invoke();
         }
 
-        private bool isValidBid(Card.face f, int num)
+        private bool isValidBid(Card.Face f, int num)
         {
             if (num < 1 || num > 7)
                 return false;

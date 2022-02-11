@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BridgeApp"
         mc:Ignorable="d"
-        Title="Bidding" Height="370" Width="535" MinWidth="400" MinHeight="300" MaxWidth="800" MaxHeight="600" Closing="BiddingWindow_Closing" Loaded="BiddingWindow_Loaded">
+        Title="Bidding" Height="370" Width="535" MinWidth="400" MinHeight="300" MaxWidth="800" MaxHeight="600" Closing="BiddingWindow_Closing" Loaded="BiddingWindow_Loaded" ResizeMode="NoResize" UseLayoutRounding="False">
     <Grid x:Name="root">
         <Grid.RowDefinitions>
             <RowDefinition Height="20"/>
@@ -69,7 +69,7 @@
             <Button x:Name="_4D" Content="4 Diamonds"  Grid.Row="4" Grid.Column="2" Click="Tile_Click"/>
             <Button x:Name="_4H" Content="4 Hearts"    Grid.Row="4" Grid.Column="3" Click="Tile_Click"/>
             <Button x:Name="_4S" Content="4 Spades"    Grid.Row="4" Grid.Column="4" Click="Tile_Click"/>
-            <Button x:Name="_4N" Content="4 No Trumps" Grid.Row="4" Grid.Column="5" Click="Tile_Click"/>
+            <Button x:Name="_4N" Content="4 No Trump" Grid.Row="4" Grid.Column="5" Click="Tile_Click"/>
 
             <Button x:Name="_5C" Content="5 Clubs"     Grid.Row="5" Grid.Column="1" Click="Tile_Click"/>
             <Button x:Name="_5D" Content="5 Diamonds"  Grid.Row="5" Grid.Column="2" Click="Tile_Click"/>

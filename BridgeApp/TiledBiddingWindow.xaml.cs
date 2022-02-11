@@ -1,19 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-// using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using ISU_Bridge;
 
@@ -24,17 +15,24 @@ namespace BridgeApp
     /// </summary>
     public partial class TiledBiddingWindow : Window
     {
-        public event Action<Card.face, int> onBidPlaced;
-        public event Action onPass;
-
-
 
         private Button[][] tiles;
-        const int MAX_ROW = 7;
-        const int MAX_COL = 5;
-
+        private const int MAX_ROW = 7;
+        private const int MAX_COL = 5;
         private int hoveredNum;
-        private Card.face hoveredSuit;
+        private Card.Face hoveredSuit;
+
+        // the below code removes the close, minimize, maximize buttons
+        // https://stackoverflow.com/questions/743906/how-to-hide-close-button-in-wpf-window
+        private const int GWL_STYLE = -16;
+        private const int WS_SYSMENU = 0x80000;
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        public event Action<Card.Face, int> OnBidPlaced;
+        public event Action OnPass;
 
         public TiledBiddingWindow()
         {
@@ -43,7 +41,7 @@ namespace BridgeApp
             PopulateTiles();
         }
 
-        private void PopulateTiles()
+        public void PopulateTiles()
         {
             tiles = new Button[7][];
             for (int row = 0; row < 7; row++)
@@ -79,42 +77,45 @@ namespace BridgeApp
             // get suit
             char c = b.Name.ToString()[2];
 
-            Card.face f = Card.face.NoTrump;
+            Card.Face f = Card.Face.NoTrump;
             if (c.Equals('C'))
-                f = Card.face.Clubs;
+                f = Card.Face.Clubs;
             else if (c.Equals('D'))
-                f = Card.face.Diamonds;
+                f = Card.Face.Diamonds;
             else if (c.Equals('H'))
-                f = Card.face.Hearts;
+                f = Card.Face.Hearts;
             else if (c.Equals('S'))
-                f = Card.face.Spades;
-            else //if (c.Equals('N'))
-                f = Card.face.NoTrump;
+                f = Card.Face.Spades;
+            else
+                f = Card.Face.NoTrump;
 
             HoverBid(num, f);
         }
+
         private void Help_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Help?");
         }
+
         private void Bid_Click(object sender, RoutedEventArgs e)
         {
             Bid(hoveredSuit, hoveredNum);
         }
+
         private void Pass_Click(object sender, RoutedEventArgs e)
         {
             Pass();
         }
 
-        public void Bid(Card.face f, int num)
+        public void Bid(Card.Face f, int num)
         {
             // roundabout way of calling Game.PlaceBid
-            onBidPlaced.Invoke(f, num);
+            OnBidPlaced.Invoke(f, num);
         }
         public void Pass()
         {
             // roundabout way of calling Game.Pass
-            onPass.Invoke();
+            OnPass.Invoke();
         }
 
         public void RefreshWindow()
@@ -128,7 +129,7 @@ namespace BridgeApp
             }), null);
 
             Dispatcher.PushFrame(frame);
-            //EDIT:
+            
             Application.Current.Dispatcher.Invoke(DispatcherPriority.Background,
                                           new Action(delegate { }));
 
@@ -138,15 +139,15 @@ namespace BridgeApp
         public void SetPlayerGUI(Contract c)
         {
             int row, col = 0;
-            if (!c.hasOneBid)
+            if (!c.HasOneBid)
             {
                 row = 0;
                 col = -1;
             }
             else
             {
-                row = c.numTricks - 1;
-                col = CharToInt(c.suit.ToString()[0]);
+                row = c.NumTricks - 1;
+                col = CharToInt(c.Suit.ToString()[0]);
             }
 
             // psuedo-enable
@@ -175,12 +176,13 @@ namespace BridgeApp
             UpdateWaiting();
             RefreshWindow();
         }
+
         private void UpdateColors(Contract c)
         {
-            if (c.hasOneBid)
+            if (c.HasOneBid)
             {
-                int row = c.numTricks - 1;
-                int col = CharToInt(c.suit.ToString()[0]);
+                int row = c.NumTricks - 1;
+                int col = CharToInt(c.Suit.ToString()[0]);
 
                 // show different color for previous bids
                 for (int i = 0; i < row; i++)
@@ -197,6 +199,10 @@ namespace BridgeApp
 
                 // current bid
                 tiles[row][col].Background = new SolidColorBrush(Color.FromRgb(150, 160, 150));
+
+                // Labels the buttons with the player that placed the bid
+                // (so you can easily see when your partner placed a bid, but was immediately outbid)
+                tiles[row][col].Content = Table.Players[Game.Instance.Contract.Player].Name.Split(" ")[0];
             }
             else
             {
@@ -210,12 +216,12 @@ namespace BridgeApp
                 }
             }
 
-
-            if (Table.currentPlayer.isHuman)
+            if (Table.CurrentPlayer.IsHuman)
                 txtWaiting.Background = new SolidColorBrush(Color.FromRgb(200, 255, 200));
             else
                 txtWaiting.Background = new SolidColorBrush(Color.FromRgb(255, 200, 200));
         }
+
         private void DisableAll()
         {
             // prevent the player from clicking buttons while they're not supposed to
@@ -227,20 +233,23 @@ namespace BridgeApp
             btnBid.IsEnabled = false;
             btnPass.IsEnabled = false;
         }
-        private void HoverBid(int num, Card.face f)
+
+        private void HoverBid(int num, Card.Face f)
         {
             btnBid.Content = "Confirm Bid: " + num + " " + f.ToString();
             hoveredNum = num;
             hoveredSuit = f;
             btnBid.IsEnabled = true;
         }
+
         private void UpdateHighestBid(Contract c)
         {
-            txtHighestBid.Text = "Highest Bid: " + c.numTricks + " " + c.suit.ToString() + " " + Table.players[c.player].name;
+            txtHighestBid.Text = c.NumTricks == 0 ? "" : "Highest Bid: " + c.NumTricks + " " + c.Suit.ToString() + " " + Table.Players[c.Player].Name;
         }
+
         private void UpdateWaiting()
         {
-            string playerName = Table.currentPlayer.name;
+            string playerName = Table.CurrentPlayer.Name;
 
             txtWaiting.Text = "Waiting for bid from " + playerName;
         }
@@ -249,71 +258,53 @@ namespace BridgeApp
         {
             MessageBox.Show("Bidding Finished");
 
-            this.Hide();
-
-            // play for south if north or south won bid
-            if (Game.instance.contract.player % 2 == 0)
-                Table.players[2].hand.Is_dummy = true;
+            Hide();
 
             // update contract info text
             string contractText = "Contract: ";
-            if (Game.instance.contract.player % 2 == 0)
+            if (Game.Instance.Contract.Player % 2 == 0)
+            {
                 contractText += "N/S\n";
+                // play for south if north or south won bid
+                Table.Players[2].Hand.IsDummy = true;
+                Table.Players[2].IsHuman = true;
+            }
             else
+            {
                 contractText += "E/W\n";
-            contractText += Game.instance.contract.numTricks + " " + Game.instance.contract.suit.ToString();
-            MainWindow.instance.lblContract.Content = contractText;
+                Table.Players[2].Hand.IsDummy = false;
+                Table.Players[2].IsHuman = false;
+            }
+            contractText += Game.Instance.Contract.NumTricks + " " + Game.Instance.Contract.Suit.ToString();
+            MainWindow.Instance.lblContract.Content = contractText;
 
+            foreach (Player p in Table.Players)
+            {
+                p.Hand.Sort(Game.Instance.Contract.Suit);
+            }
 
-            Table.game.Play();
+            Table.Game.Play();
         }
+
         public void UpdatePassText(Contract c)
         {
-            int max = c.hasOneBid ? 3 : 4;
-            btnPass.Content = "Pass (" + c.numPassed + "/" + max + ")";
+            int max = c.HasOneBid ? 3 : 4;
+            btnPass.Content = "Pass (" + c.NumPassed + "/" + max + ")";
         }
-        private Card.face IntToFace(int n)
-        {
-            if (n == 0)
-                return Card.face.Clubs;
-            else if (n == 1)
-                return Card.face.Diamonds;
-            else if (n == 2)
-                return Card.face.Hearts;
-            else if (n == 3)
-                return Card.face.Spades;
-            else //if (n == 4)
-                return Card.face.NoTrump;
-        }
+
         private int CharToInt(char c)
         {
-            if (c.Equals('C'))
-                return 0;
-            else if (c.Equals('D'))
-                return 1;
-            else if (c.Equals('H'))
-                return 2;
-            else if (c.Equals('S'))
-                return 3;
-            else //if (c.Equals('N'))
-                return 4;
+            if (c.Equals('C')) return 0;
+            else if (c.Equals('D')) return 1;
+            else if (c.Equals('H')) return 2;
+            else if (c.Equals('S')) return 3;
+            else return 4;
         }
 
         private void BiddingWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // MessageBox.Show("No");
-            // e.Cancel = true;
+            
         }
-
-
-        // the below code removes the close, minimize, maximize buttons
-        // https://stackoverflow.com/questions/743906/how-to-hide-close-button-in-wpf-window
-        private const int GWL_STYLE = -16;
-        private const int WS_SYSMENU = 0x80000;
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
         private void BiddingWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -321,7 +312,5 @@ namespace BridgeApp
             var hwnd = new WindowInteropHelper(this).Handle;
             SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SYSMENU);
         }
-
-
     }
 }
