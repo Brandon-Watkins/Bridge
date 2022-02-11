@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace BridgeApp
 {
@@ -17,9 +8,10 @@ namespace BridgeApp
     /// </summary>
     public partial class BridgeConsole : Window
     {
-        public static BridgeConsole instance { get { return MainWindow.instance.consoleWindow; } }
 
-        private static int maxLines = 40;
+        public static BridgeConsole instance => MainWindow.Instance.ConsoleWindow;
+
+        private static readonly int maxLines = 40;
 
         public BridgeConsole()
         {
@@ -27,11 +19,12 @@ namespace BridgeApp
 
             txtLog.Text = "";
         }
+
         private void ConsoleWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // https://stackoverflow.com/questions/3001525/how-to-override-default-window-close-operation
             e.Cancel = true;
-            this.Hide();
+            Hide();
         }
 
         public static void Log(string s)
@@ -51,6 +44,7 @@ namespace BridgeApp
             logString = "[" + time + "] - " + logString;
             instance.txtLog.Text = logString;
         }
+
         public static void Clear()
         {
             instance.txtLog.Text = "";

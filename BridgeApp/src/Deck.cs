@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ISU_Bridge
 {
     public class Deck
     {
-
-        private List<Card> cards;
-        public List<Card> Cards { get { return cards; } set { cards = value; } }
+        private List<Card> _cards;
 
         public Deck() { }
 
@@ -20,17 +16,9 @@ namespace ISU_Bridge
         /// <param name="hands">The hands that are being dealt to</param>
         public void Initialize(List<Hand> hands)
         {
-            Build();
-            Shuffle();
-            Deal(hands);
-        }
+            foreach (Hand hand in hands) hand.IsDummy = false;
 
-        /// <summary>
-        /// Shuffles the deck and deals out
-        /// </summary>
-        /// <param name="hands">The hands being dealt to</param>
-        public void Reset(List<Hand> hands)
-        {
+            Build();
             Shuffle();
             Deal(hands);
         }
@@ -40,13 +28,13 @@ namespace ISU_Bridge
         /// </summary>
         public void Build()
         {
-            cards = new List<Card>();
+            _cards = new List<Card>();
             for (int i = 2; i < 15; i++)
             {
-                cards.Add(new Card(i, Card.face.Clubs, (i+"Clubs.png")));
-                cards.Add(new Card(i, Card.face.Diamonds, (i+"Diamonds.png")));
-                cards.Add(new Card(i, Card.face.Hearts, (i+"Hearts.png")));
-                cards.Add(new Card(i, Card.face.Spades,(i+"Spades.png")));
+                _cards.Add(new Card(i, Card.Face.Clubs, (i+"Clubs.png")));
+                _cards.Add(new Card(i, Card.Face.Diamonds, (i+"Diamonds.png")));
+                _cards.Add(new Card(i, Card.Face.Hearts, (i+"Hearts.png")));
+                _cards.Add(new Card(i, Card.Face.Spades, (i+"Spades.png")));
             }
         }
 
@@ -55,15 +43,15 @@ namespace ISU_Bridge
         /// </summary>
         public void Shuffle()
         {
-            int n = cards.Count();
+            int n = _cards.Count();
             Random r = new Random();
             while (n > 1)
             {
                 n--;
                 int k = r.Next(n + 1);
-                Card c = Cards[k];
-                Cards[k] = Cards[n];
-                Cards[n] = c;
+                Card c = _cards[k];
+                _cards[k] = _cards[n];
+                _cards[n] = c;
             }
         }
 
@@ -74,20 +62,17 @@ namespace ISU_Bridge
         public void Deal(List<Hand> hands)
         {
             foreach (Hand h in hands) { h.Cards.Clear(); }
-            int n = cards.Count();
+            int n = _cards.Count();
             while (n > 1)
             {
                 foreach (Hand h in hands)
                 {
                     n--;
-                    if (n >= 0)
-                    {
-                        Cards[n].Owner = h;
-                        h.Cards.Add(Cards[n]); // th
-                    }
+                    if (n >= 0) h.Cards.Add(_cards[n]);
                 }
             }
-            foreach (Hand h in hands) { h.Sort(); }
+            // Initial sorting (not taking trump into account, wait until after bids)
+            foreach (Hand h in hands) h.Sort();
         }
     }
 }

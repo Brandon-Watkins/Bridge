@@ -73,7 +73,7 @@
                     <Button x:Name ="southCard1" Click="Card_Click"  Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5"  >
                         <Image x:Name="southCard1Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="southCard2" Click="Card_Click"  Height="80" Width="64" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="southCard2" Click="Card_Click"  Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="southCard2Img" Source="/cardBack.jpg" />
                     </Button>
                     <Button x:Name ="southCard3" Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
@@ -111,9 +111,9 @@
                     </Button>
                 </StackPanel>
             </Grid>
-
+            
             <Grid x:Name="gdEast" HorizontalAlignment="Stretch" Width="1348" Panel.ZIndex="-1">
-                <StackPanel x:Name="spEast" HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal" RenderTransformOrigin="0.5,0.5" Width="532" Height="80">
+                <StackPanel x:Name="spEast" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal" RenderTransformOrigin="0.5,0.5" Margin="0,0,800,0" Grid.ColumnSpan="2">
                     <StackPanel.RenderTransform>
                         <TransformGroup>
                             <ScaleTransform/>
@@ -125,7 +125,7 @@
                     <Button x:Name ="eastCard1"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5"  >
                         <Image x:Name="eastCard1Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="eastCard2"  Click="Card_Click" Height="80" Width="64" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="eastCard2"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="eastCard2Img" Source="/cardBack.jpg" />
                     </Button>
                     <Button x:Name ="eastCard3"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
@@ -146,7 +146,7 @@
                     <Button x:Name ="eastCard8"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="eastCard8Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="eastCard9"  Click="Card_Click" Height="80" Width="63" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="eastCard9"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="eastCard9Img" Source="/cardBack.jpg" />
                     </Button>
                     <Button x:Name ="eastCard10"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
@@ -212,22 +212,22 @@
                     <Button x:Name ="westCard1"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5"  >
                         <Image x:Name="westCard1Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="westCard2"  Click="Card_Click" Height="80" Width="64" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="westCard2"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard2Img" Source="/cardBack.jpg" />
                     </Button>
                     <Button x:Name ="westCard3"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard3Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="westCard4"  Click="Card_Click" Height="80"  Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="westCard4"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard4Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="westCard5"  Click="Card_Click" Height="80"  Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="westCard5"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard5Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="westCard6"  Click="Card_Click" Height="80"  Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="westCard6"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard6Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="westCard7"  Click="Card_Click" Height="80"  Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="westCard7"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard7Img" Source="/cardBack.jpg" />
                     </Button>
                     <Button x:Name ="westCard8"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
@@ -239,13 +239,13 @@
                     <Button x:Name ="westCard10"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard10Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="westCard11"  Click="Card_Click" Height="80"  Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="westCard11"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard11Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="westCard12"  Click="Card_Click" Height="80"  Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="westCard12"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard12Img" Source="/cardBack.jpg" />
                     </Button>
-                    <Button x:Name ="westCard13"  Click="Card_Click" Height="80"  Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
+                    <Button x:Name ="westCard13"  Click="Card_Click" Height="80" Width="63" Margin="-12" RenderTransformOrigin="0.5,0.5" >
                         <Image x:Name="westCard13Img" Source="/cardBack.jpg" />
                     </Button>
                 </StackPanel>
@@ -280,7 +280,7 @@
                     <Image x:Name="imgShowTricksS12" Height="80" Width="60" Source="/cardBack.jpg" Margin="0,0,0,-50" HorizontalAlignment="Left" />
                     <Image x:Name="imgShowTricksS13" Height="80" Width="60" Source="/cardBack.jpg" Margin="0,0,0,-50" HorizontalAlignment="Left" />
                 </StackPanel>
-                <Label x:Name="lblWestPlayer" Content="West" HorizontalAlignment="Left" Height="29" Margin="1087,106,0,0" VerticalAlignment="Top" Width="84"/>
+                <Label x:Name="lblWestPlayer" Content="West" HorizontalAlignment="Left" Height="29" Margin="1030,94,0,0" VerticalAlignment="Top" Width="84"/>
 
                 <Label Content="NorthTricks" HorizontalAlignment="Left" Height="24" Margin="1168,94,0,0" VerticalAlignment="Top" Width="96" RenderTransformOrigin="0.506,1.63"/>
                 <Label Content="SouthTricks" HorizontalAlignment="Left" Height="24" Margin="1260,94,0,0" VerticalAlignment="Top" Width="76" RenderTransformOrigin="0.506,1.63"/>

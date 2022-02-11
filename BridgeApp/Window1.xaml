@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BridgeApp"
         mc:Ignorable="d"
-        Title="ISU Bridge" Height="394" Width="685" MinWidth="469" MinHeight="285">
+        Title="Bridge" Height="394" Width="685" MinWidth="469" MinHeight="285">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition></RowDefinition>
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
-        <TextBlock Text="ISU Bridge" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" FontSize="48" />
+        <TextBlock Text="Bridge" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" FontSize="48" />
         <Button x:Name="StartGameBtn" Content="Start Game" HorizontalAlignment="Center" VerticalAlignment="Center" Click="StartGame_Click" Grid.Row="1" Width="166" Height="44"/>
 
     </Grid>

@@ -1,27 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace ISU_Bridge
 {
     public class Card
     {
-        public static face[] suits
-        {
-            get
-            {
-                // https://stackoverflow.com/questions/3816718/how-to-get-an-array-of-all-enum-values-in-c
-                if (_suits == null)
-                    _suits = (face[])Enum.GetValues(typeof(face));
 
-                return _suits;
-            }
-        }
-        private static face[] _suits;
-
-        public enum face
+        public enum Face
         {
             Clubs,
             Diamonds,
@@ -29,15 +12,13 @@ namespace ISU_Bridge
             Spades,
             NoTrump
         }
-        private face suit;
-        private int number;
-        private Hand owner;
-        private string imageLocation;
 
-        public face Suit { get { return suit; } set { suit = value; } }
-        public int Number { get { return number; } set { if (value > 1 && value < 15) number = value; } }
-        public Hand Owner { get { return owner; } set { owner = value; } }
-        public string ImageLocation { get { return imageLocation; } set { imageLocation = value; } }
+        private int _number;
+
+        public Face Suit { get; set; }
+        public int Number { get { return _number; } set { if (value > 1 && value < 15) _number = value; } }
+        public Hand Owner { get; set; }
+        public string ImageLocation { get; set; }
 
         /// <summary>
         /// Default Constructor for the Card Class
@@ -49,18 +30,38 @@ namespace ISU_Bridge
         /// </summary>
         /// <param name="num">Value of the Card, should be between 1 and 13</param>
         /// <param name="type">enumerated type for the suit of the card</param>
-        public Card(int num, face type, string loc)
+        public Card(int num, Face type, string loc)
         {
             Number = num;
             Suit = type;
-            imageLocation = loc;
+            ImageLocation = loc;
         }
 
-
-        public override string ToString() // th
+        public override string ToString()
         {
-            //return number + " of " + suit.ToString();
-            return number + suit.ToString()[0].ToString();
+            return _number + Suit.ToString()[0].ToString();
+        }
+    }
+
+    /// <summary>
+    /// Not a playable card, just used as a null place holder. 
+    /// If you use this, make sure you're checking if X == NullCard.Instance, or this will cause issues.
+    /// Brandon Watkins
+    /// </summary>
+    public class NullCard : Card
+    {
+
+        private static NullCard _instance;
+        public static NullCard Instance {
+            get {
+                if (_instance == null) return _instance = new NullCard();
+                else return _instance;
+            }
+        }
+
+        public NullCard() : base(2, Face.NoTrump, "")
+        {
+            
         }
     }
 }

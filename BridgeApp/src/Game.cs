@@ -1,122 +1,121 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using BridgeApp;
-using System.Threading;
-using System.IO;
 using System.Windows;
+using System.Threading;
 
 namespace ISU_Bridge
 {
     public class Game
     {
-        public static Game instance;
+
+        public static Game Instance { get; private set; }
+        public static bool debugging = false; // true: displays logger, and shows all card faces.
 
         public Game()
         {
-            if (instance != null)
+            if (Instance != null)
             {
                 // maybe events here not such a great idea?
-                MainWindow.instance.bid.onBidPlaced -= instance.PlaceBid;
-                MainWindow.instance.bid.onPass -= instance.Pass;
+                MainWindow.Instance.Bid.OnBidPlaced -= Instance.PlaceBid;
+                MainWindow.Instance.Bid.OnPass -= Instance.Pass;
             }
             else
             {
-                MainWindow.instance.bid.onBidPlaced += PlaceBid;
-                MainWindow.instance.bid.onPass += Pass;
+                MainWindow.Instance.Bid.OnBidPlaced += PlaceBid;
+                MainWindow.Instance.Bid.OnPass += Pass;
             }
 
-            instance = this;
+            Instance = this;
 
-            Prep_Hand();
+            PrepHand();
         }
 
-        public Contract contract { get; private set; }
-        public bool isBidding { get; private set; }
+        public Contract Contract { get; private set; }
+        public bool IsBidding { get; private set; }
 
-        void DealCards()
+        private void DealCards()
         {
             List<Hand> hands = new List<Hand>();
-            foreach (Player p in Table.players)
+            foreach (Player p in Table.Players)
             {
-                hands.Add(p.hand);
+                hands.Add(p.Hand);
             }
-            Table.deck = new Deck();
-            Table.deck.Initialize(hands);
+            Table.Deck = new Deck();
+            Table.Deck.Initialize(hands);
         }
 
         #region Bidding
-        void StartBidding()
+        private void StartBidding()
         {
-            contract = new Contract();
-            isBidding = true;
+            Contract = new Contract();
+            IsBidding = true;
 
-            MainWindow.instance.bid.Show();
-            MainWindow.instance.bid.Update(contract);
-            MainWindow.instance.SetCardButtonsEnabled(0, false);
+            // Reset dummy hand
+            Table.Players[2].IsHuman = false;
+            for (int i = 1; i < 4; i++) Table.Players[i].Hand.IsDummy = false;
 
+            // Repopulate tiles to erase old bid indicators.
+            MainWindow.Instance.Bid.PopulateTiles();
 
-            Table.currentPlayerIndex = 0;
+            MainWindow.Instance.Bid.Show();
+            //MainWindow.Instance.Bid.Update(Contract);
+            MainWindow.Instance.SetCardButtonsEnabled(0, false);
+
             BridgeConsole.Log("Bidding started...");
-            Table.currentPlayerIndex = 0;
-            MainWindow.instance.bid.Update(contract);
-            Table.players[Table.currentPlayerIndex].QueryBid(contract);
+            Table.CurrentPlayerIndex = Table.DealerIndex;
+            MainWindow.Instance.Bid.Update(Contract);
+            Table.CurrentPlayer.QueryBid(Contract);
         }
 
         /// <summary>
         /// Called by a player to confirm a bid
         /// </summary>
-        void PlaceBid(Card.face face, int num)
+        /// <param name="face"></param>
+        /// <param name="num"></param>
+        private void PlaceBid(Card.Face face, int num)
         {
             // update contract
-            contract.numTricks = num;
-            contract.player = Table.currentPlayerIndex;
-            contract.suit = face;
-            contract.numPassed = 0;
-            contract.hasOneBid = true;
+            Contract.Bid(Table.CurrentPlayerIndex, face, num);
 
-            Player p = Table.players[Table.currentPlayerIndex];
-            Debug.WriteLine(p.name + " bid " + num + " " + face.ToString());
-            BridgeConsole.Log($"{Table.currentPlayer.name} bid {num} {face.ToString()}");
+            BridgeConsole.Log($"{Table.CurrentPlayer} bid {num} {face}");
 
-            Table.updateCurrentPlayer();
-            MainWindow.instance.bid.Update(contract);
+            Table.NextPlayer();
+            MainWindow.Instance.Bid.Update(Contract);
 
-            p = Table.players[Table.currentPlayerIndex];
-            p.QueryBid(contract);
+            Table.CurrentPlayer.QueryBid(Contract);
         }
 
         /// <summary>
         /// Called by a player to confirm a pass in bidding
         /// </summary>
-        void Pass()
+        private void Pass()
         {
-            Player p = Table.players[Table.currentPlayerIndex];
-            Debug.WriteLine(p.name + " passed");
-            BridgeConsole.Log($"{Table.currentPlayer} passed");
-            contract.numPassed += 1;
+            BridgeConsole.Log($"{Table.CurrentPlayer} passed");
+            Contract.Pass();
 
-            Table.updateCurrentPlayer();
-            MainWindow.instance.bid.Update(contract);
+            Table.NextPlayer();
+            MainWindow.Instance.Bid.Update(Contract);
 
             // finished bidding? - move to contract
-            if (!contract.hasOneBid && contract.numPassed == 4)
+            if (!Contract.HasOneBid && Contract.NumPassed == 4)
             {
-                Prep_Hand();
-                contract.numPassed = 0;
+                PrepHand();
+                Contract.Reset();
             }
-            if (contract.hasOneBid && contract.numPassed == 3)
+            if (Contract.HasOneBid && Contract.NumPassed == 3)
             {
-                isBidding = false;
+                IsBidding = false;
             }
 
-            if (isBidding)
-                Table.players[Table.currentPlayerIndex].QueryBid(contract);
+            if (IsBidding)
+            {
+                Table.CurrentPlayer.QueryBid(Contract);
+            }
             else
-                MainWindow.instance.bid.EndBidding();
+            {
+                MainWindow.Instance.Bid.EndBidding();
+            }
         }
         #endregion] Bidding
 
@@ -126,74 +125,77 @@ namespace ISU_Bridge
         /// </summary>
         public void Play()
         {
-            if (!Table.scoreboard.matchOver)
+            if (!Table.Scoreboard.MatchOver)
             {
                 BridgeConsole.Log("Started playing");
-                Table.updateCurrentPlayer();
-                Prep_Trick(Table.currentPlayerIndex);
+                Table.NextPlayer();
+                PrepTrick(Table.CurrentPlayerIndex);
             }
             else
             {
-                MessageBoxResult result = MessageBox.Show("Game Over!" + ((Table.scoreboard.t1total > Table.scoreboard.t2total) ? " You Win!" : " You Lose...") + "\nPlay Again?", "ISU Bridge", MessageBoxButton.YesNo);
+                MainWindow.Instance.ScoreboardWindow.Show();
+                MessageBoxResult result = MessageBox.Show("Game Over!" + ((Table.Scoreboard.T1total > Table.Scoreboard.T2total) ? 
+                    " You Win!" : 
+                    " You Lose...") + "\nPlay Again?", "Bridge", MessageBoxButton.YesNo);
                 switch (result)
                 {
                     case MessageBoxResult.Yes:
-                        Table.initialize();
-                        MainWindow.instance.scoreboardWindow.Update(Table.scoreboard);
-                        Prep_Hand();
+                        Table.Initialize();
+                        MainWindow.Instance.ScoreboardWindow.Update(Table.Scoreboard);
+                        PrepHand();
                         break;
                     case MessageBoxResult.No:
                         Application.Current.Shutdown();
                         break;
                 }
-
             }
         }
 
         /// <summary>
         /// Calls the functions neccesary to begin a single hand of bridge
         /// </summary>
-        private void Prep_Hand()
+        private void PrepHand()
         {
             DealCards();
-            for (int i = 0; i < 4; i++) { Table.players[i].tricksWonInHand = 0; }
+            for (int i = 0; i < 4; i++) { Table.Players[i].TricksWonInHand = 0; }
             StartBidding();
-            MainWindow.instance.displayAllCards();
+            MainWindow.Instance.DisplayAllCards();
         }
 
         /// <summary>
         /// Called after the previous trick is processed. updates variables neccessary to reset and prep for the next trick
         /// </summary>
         /// <param name="last_winner_index">player index of the winner of the previous trick</param>
-        private void Prep_Trick(int last_winner_index)
+        private void PrepTrick(int last_winner_index)
         {
-            for (int i = 0; i < 4; i++) { Table.cardsPlayed[i] = null; }
-            Table.leadPlayerIndex = last_winner_index;
-            Table.currentPlayerIndex = last_winner_index;
+            for (int i = 0; i < 4; i++) { Table.CardsPlayed[i] = null; }
+            Table.LeadPlayerIndex = last_winner_index;
+            Table.CurrentPlayerIndex = last_winner_index;
 
             // let player or dummy click cards if they won the contract
-            MainWindow.instance.SetCardButtonsEnabled(0, Table.currentPlayerIndex == 0);
-            MainWindow.instance.SetCardButtonsEnabled(2, Table.currentPlayerIndex == 2 && Table.currentPlayer.hand.Is_dummy);
+            MainWindow.Instance.SetCardButtonsEnabled(0, IsPlayersTurn() && !IsDummysTurn());
+            // Dummy
+            MainWindow.Instance.SetCardButtonsEnabled(2, IsDummysTurn());
 
-            if (Table.currentPlayer.hand.Cards.Count > 0)
+            if (Table.CurrentPlayer.Hand.Cards.Count > 0)
             {
-                MainWindow.instance.displayAllCards();
-                //if (Table.currentPlayerIndex != 0)
-                if (Table.currentPlayerIndex % 2 == 1)
-                    Table.currentPlayer.PickCard();
-                else if (Table.currentPlayerIndex == 2 && !Table.currentPlayer.hand.Is_dummy)
-                    Table.currentPlayer.PickCard();
+                MainWindow.Instance.DisplayAllCards();
+                if (!IsPlayersTurn())
+                {
+                    Table.CurrentPlayer.PickCard();
+                }
             }
             else
             {
-                Table.scoreboard.handOver();
-                if (Table.scoreboard.matchOver)
+                Table.NextDealer();
+                Table.Scoreboard.HandOver();
+                if (Table.Scoreboard.MatchOver)
                 {
                     Play();
                 }
                 else
                 {
-                    Prep_Hand();
+                    PrepHand();
                 }
             }
 
@@ -202,43 +204,75 @@ namespace ISU_Bridge
         /// <summary>
         /// Determines the winner of a single trick and increments that player's trickswon variable
         /// </summary>
-        private void Process_trick()
+        private void ProcessTrick()
         {
             int high_scorer = -1;
             int best_score = 0;
             int count = 0;
-            foreach (Card c in Table.cardsPlayed)
+            foreach (Card c in Table.CardsPlayed)
             {
                 int card_score = 0;
-                card_score += (c.Suit == Table.trumpSuit) ? 1000 : 0;
-                card_score += (c.Suit == Table.cardsPlayed[Table.leadPlayerIndex].Suit) ? 100 : 0;
+                card_score += (c.Suit == Table.TrumpSuit) ? 1000 : 0;
+                card_score += (c.Suit == Table.CardsPlayed[Table.LeadPlayerIndex].Suit) ? 100 : 0;
                 card_score += c.Number;
                 if (card_score > best_score) { best_score = card_score; high_scorer = count; }
                 count++;
             }
-            Table.players[high_scorer].tricksWonInHand++;
-            Prep_Trick(high_scorer);
+            Table.Players[high_scorer].TricksWonInHand++;
+            BridgeConsole.Log(Table.Players[high_scorer] + " won the trick.");
+
+            // Ensures the game shows the last card played for half a second before clearing the cards.
+            MainWindow.Instance.DisplayAllCards();
+            Thread.Sleep(500);
+
+            PrepTrick(high_scorer);
         }
 
         /// <summary>
         /// Called whenever a card is played. This is what ticks the game forward
         /// </summary>
-        public void Update_Card_Played()
+        public void UpdateCardPlayed()
         {
-            Table.updateCurrentPlayer();
+            Table.NextPlayer();
 
             // update card clickability between cards played
-            MainWindow.instance.displayAllCards();
+            MainWindow.Instance.DisplayAllCards();
 
-            if (Table.currentPlayerIndex == Table.leadPlayerIndex) { Process_trick(); }
+            if (Table.CurrentPlayerIndex == Table.LeadPlayerIndex) { ProcessTrick(); }
             else
             {
-                var idx = Table.currentPlayerIndex;
-                if (idx == 0 || (idx == 2 && contract.player % 2 == 0))
-                    MainWindow.instance.SetCardButtonsEnabled(idx, true);
+                // Dummy
+                if (IsPlayersTurn())
+                {
+                    MainWindow.Instance.SetCardButtonsEnabled(Table.CurrentPlayerIndex, true);
+                }
                 else
-                    Table.currentPlayer.PickCard();
+                {
+                    Table.CurrentPlayer.PickCard();
+                }
             }
+        }
+
+        /// <summary>
+        /// Checks to see if current player is a USER-CONTROLLED dummy.
+        /// Brandon Watkins
+        /// </summary>
+        /// <returns>(bool) True if current player is a user-controlled dummy</returns>
+        public bool IsDummysTurn()
+        {
+            // Dummy
+            return Table.CurrentPlayerIndex == 2 && Table.CurrentPlayer.IsHuman;
+        }
+
+        /// <summary>
+        /// Checks to see if current player is the user OR a user-controlled dummy.
+        /// Brandon Watkins
+        /// </summary>
+        /// <returns>(bool) True if current player is the user or user-controlled dummy</returns>
+        public bool IsPlayersTurn()
+        {
+            // Dummy
+            return Table.CurrentPlayerIndex == 0 || IsDummysTurn();
         }
     }
 }
