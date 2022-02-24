@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using BridgeApp;
 using System.Windows;
-using System.Threading;
+using System.Timers;
 
 namespace ISU_Bridge
 {
@@ -10,7 +9,10 @@ namespace ISU_Bridge
     {
 
         public static Game Instance { get; private set; }
-        public static bool debugging = false; // true: displays logger, and shows all card faces.
+        // true: displays logger, and shows all card faces.
+        public static bool debugging = false;
+        // Make sure to divide by this number, not multiply.
+        public static double computerSpeedMultiplier = 1.0; 
 
         public Game()
         {
@@ -32,7 +34,7 @@ namespace ISU_Bridge
         }
 
         public Contract Contract { get; private set; }
-        public bool IsBidding { get; private set; }
+        public bool IsBidding { get; private set; } = true;
 
         private void DealCards()
         {
@@ -46,26 +48,26 @@ namespace ISU_Bridge
         }
 
         #region Bidding
+        /// <summary>
+        /// Sets up the window in preparation for bidding.
+        /// Brandon Watkins
+        /// </summary>
         private void StartBidding()
         {
+            if (!(Contract is null)) MainWindow.Instance.UpdateBidContent();
+
             Contract = new Contract();
             IsBidding = true;
+
+            if (debugging) BridgeConsole.Log("Bidding started...");
 
             // Reset dummy hand
             Table.Players[2].IsHuman = false;
             for (int i = 1; i < 4; i++) Table.Players[i].Hand.IsDummy = false;
 
-            // Repopulate tiles to erase old bid indicators.
-            MainWindow.Instance.Bid.PopulateTiles();
+            Table.SetPlayer(Table.DealerIndex);
 
-            MainWindow.Instance.Bid.Show();
-            //MainWindow.Instance.Bid.Update(Contract);
-            MainWindow.Instance.SetCardButtonsEnabled(0, false);
-
-            BridgeConsole.Log("Bidding started...");
-            Table.CurrentPlayerIndex = Table.DealerIndex;
-            MainWindow.Instance.Bid.Update(Contract);
-            Table.CurrentPlayer.QueryBid(Contract);
+            MainWindow.Instance.StartBidding();
         }
 
         /// <summary>
@@ -75,8 +77,7 @@ namespace ISU_Bridge
         /// <param name="num"></param>
         private void PlaceBid(Card.Face face, int num)
         {
-            // update contract
-            Contract.Bid(Table.CurrentPlayerIndex, face, num);
+            Contract.Bid(Table.CurrentPlayerIndex, face, num, Table.CurrentPlayer.ToString().Split(" ")[0]);
 
             BridgeConsole.Log($"{Table.CurrentPlayer} bid {num} {face}");
 
@@ -91,17 +92,22 @@ namespace ISU_Bridge
         /// </summary>
         private void Pass()
         {
-            BridgeConsole.Log($"{Table.CurrentPlayer} passed");
-            Contract.Pass();
+            if (Game.debugging) BridgeConsole.Log($"{Table.CurrentPlayer} passed");
+            Contract.Pass(Table.CurrentPlayer.ToString().Split(" ")[0]);
 
-            Table.NextPlayer();
-            MainWindow.Instance.Bid.Update(Contract);
+            // Don't increment the player if bidding is over.
+            if ((!Contract.HasOneBid && Contract.NumPassed < 4) || (Contract.HasOneBid && Contract.NumPassed < 3)) Table.NextPlayer();
+
+            MainWindow.Instance.Bid.Update(Contract, true);
 
             // finished bidding? - move to contract
             if (!Contract.HasOneBid && Contract.NumPassed == 4)
             {
-                PrepHand();
-                Contract.Reset();
+                // Make sure the GUI has been updated with the latest pass.
+                MainWindow.Instance.UpdateBidContent();
+                // Wait half a second before moving onto the next hand.
+                new DelayedFunction(500, DelayedPrepHand, this);
+                return;
             }
             if (Contract.HasOneBid && Contract.NumPassed == 3)
             {
@@ -127,16 +133,18 @@ namespace ISU_Bridge
         {
             if (!Table.Scoreboard.MatchOver)
             {
-                BridgeConsole.Log("Started playing");
-                Table.NextPlayer();
+                if (debugging) BridgeConsole.Log("Started playing");
                 PrepTrick(Table.CurrentPlayerIndex);
             }
             else
             {
+                // Show the scoreboard (it can't be clicked on once the messagebox pops up)
                 MainWindow.Instance.ScoreboardWindow.Show();
                 MessageBoxResult result = MessageBox.Show("Game Over!" + ((Table.Scoreboard.T1total > Table.Scoreboard.T2total) ? 
                     " You Win!" : 
                     " You Lose...") + "\nPlay Again?", "Bridge", MessageBoxButton.YesNo);
+                // Hide the scoreboard again, in preparation for closing/restarting the game.
+                MainWindow.Instance.ScoreboardWindow.Hide();
                 switch (result)
                 {
                     case MessageBoxResult.Yes:
@@ -157,9 +165,20 @@ namespace ISU_Bridge
         private void PrepHand()
         {
             DealCards();
-            for (int i = 0; i < 4; i++) { Table.Players[i].TricksWonInHand = 0; }
-            StartBidding();
+            Table.ResetTricks();
             MainWindow.Instance.DisplayAllCards();
+            StartBidding();
+        }
+
+        /// <summary>
+        /// Just calls PrepHand. Used for DelayedFunction call.
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="src">(object) Event source</param>
+        /// <param name="e">(ElapsedEventArgs) Event data</param>
+        private void DelayedPrepHand(object src, ElapsedEventArgs e)
+        {
+            PrepHand();
         }
 
         /// <summary>
@@ -168,9 +187,8 @@ namespace ISU_Bridge
         /// <param name="last_winner_index">player index of the winner of the previous trick</param>
         private void PrepTrick(int last_winner_index)
         {
-            for (int i = 0; i < 4; i++) { Table.CardsPlayed[i] = null; }
-            Table.LeadPlayerIndex = last_winner_index;
-            Table.CurrentPlayerIndex = last_winner_index;
+            if (Table.Players[(Table.CurrentPlayerIndex + 1) % 4].Hand.Cards.Count > 0) 
+                Table.SetPlayer(Table.LeadPlayerIndex = last_winner_index);
 
             // let player or dummy click cards if they won the contract
             MainWindow.Instance.SetCardButtonsEnabled(0, IsPlayersTurn() && !IsDummysTurn());
@@ -179,6 +197,8 @@ namespace ISU_Bridge
 
             if (Table.CurrentPlayer.Hand.Cards.Count > 0)
             {
+                // Cancels any active timers, so all players are able to play again.
+                DelayedFunction.ClearTimers();
                 MainWindow.Instance.DisplayAllCards();
                 if (!IsPlayersTurn())
                 {
@@ -187,6 +207,10 @@ namespace ISU_Bridge
             }
             else
             {
+                // Resets the size of everyone's turn-indicator glow
+                // (and the size of South's cards), and hides them all.
+                MainWindow.Instance.ResetPlayerIllumination();
+
                 Table.NextDealer();
                 Table.Scoreboard.HandOver();
                 if (Table.Scoreboard.MatchOver)
@@ -211,6 +235,14 @@ namespace ISU_Bridge
             int count = 0;
             foreach (Card c in Table.CardsPlayed)
             {
+                // This is handling situations where someone wins a game, plays a card, and then Process Trick is
+                // called again, resulting in only 1 player in the trick.
+                if (c == NullCard.Instance)
+                {
+                    UpdateCardPlayed();
+                    return;
+                }
+
                 int card_score = 0;
                 card_score += (c.Suit == Table.TrumpSuit) ? 1000 : 0;
                 card_score += (c.Suit == Table.CardsPlayed[Table.LeadPlayerIndex].Suit) ? 100 : 0;
@@ -219,13 +251,25 @@ namespace ISU_Bridge
                 count++;
             }
             Table.Players[high_scorer].TricksWonInHand++;
-            BridgeConsole.Log(Table.Players[high_scorer] + " won the trick.");
+            if (debugging) BridgeConsole.Log(Table.Players[high_scorer] + " won the trick.");
+
+            Table.IsTrickComplete(Table.Players[high_scorer]);
 
             // Ensures the game shows the last card played for half a second before clearing the cards.
             MainWindow.Instance.DisplayAllCards();
-            Thread.Sleep(500);
 
-            PrepTrick(high_scorer);
+            new DelayedFunction(500, DelayedPrepTrick, this);
+        }
+
+        /// <summary>
+        /// Just calls PrepTrick. Used with DelayedFunction.
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="src">(object) Event source</param>
+        /// <param name="e">(ElapsedEventArgs) Event data</param>
+        private void DelayedPrepTrick(object src, ElapsedEventArgs e)
+        {
+            PrepTrick(Table.Instance.Tricks[Table.Instance.Tricks.Count - 1].Player.Index);
         }
 
         /// <summary>
@@ -233,14 +277,15 @@ namespace ISU_Bridge
         /// </summary>
         public void UpdateCardPlayed()
         {
-            Table.NextPlayer();
-
             // update card clickability between cards played
             MainWindow.Instance.DisplayAllCards();
 
-            if (Table.CurrentPlayerIndex == Table.LeadPlayerIndex) { ProcessTrick(); }
+            // Checking to see if the trick is over before setting next player, to keep from
+            // having the turn indicator highlight the next person, instead of the winner.
+            if ((Table.CurrentPlayerIndex + 1) % 4 == Table.LeadPlayerIndex) { ProcessTrick(); }
             else
             {
+                Table.NextPlayer();
                 // Dummy
                 if (IsPlayersTurn())
                 {
@@ -251,6 +296,18 @@ namespace ISU_Bridge
                     Table.CurrentPlayer.PickCard();
                 }
             }
+        }
+
+        /// <summary>
+        /// Just restarts the current player's turn. Used when the player tried playing a card that broke the game, 
+        /// and stopped the game progression.
+        /// Brandon Watkins
+        /// </summary>
+        public void ResumePlay()
+        {
+            MainWindow.Instance.DisplayAllCards();
+            if (IsPlayersTurn()) MainWindow.Instance.SetCardButtonsEnabled(Table.CurrentPlayerIndex, true);
+            else Table.CurrentPlayer.PickCard();
         }
 
         /// <summary>

@@ -3,17 +3,16 @@ using System.Linq;
 
 namespace ISU_Bridge
 {
-    public class Hand
+    public class Hand : SimpleObservable
     {
 
         public List<Card> Cards { get; set; }
-
         public bool IsDummy { get; set; }
 
-        public Hand()
+        public Hand() : base()
         {
             Cards = new List<Card>();
-        }
+    }
 
         /// <summary>
         /// Checks the cards in the hand to determine which cards are playable,
@@ -22,7 +21,7 @@ namespace ISU_Bridge
         /// <returns>Cards that are currently playable</returns>
         public List<Card> PlayableCards()
         {
-            if (Table.CardsPlayed[Table.LeadPlayerIndex] == null) return Cards;
+            if (Table.CardsPlayed[Table.LeadPlayerIndex] == NullCard.Instance) return Cards;
             List<Card> Output = new List<Card>();
             foreach (Card c in Cards) if (c.Suit == Table.CardsPlayed[Table.LeadPlayerIndex].Suit) Output.Add(c);
             if (Output.Count() == 0) return Cards;
@@ -118,6 +117,7 @@ namespace ISU_Bridge
         public void Play(Card playedCard)
         {
             Cards.Remove(playedCard);
+            NotifyObservers();
         }
     }
 }
