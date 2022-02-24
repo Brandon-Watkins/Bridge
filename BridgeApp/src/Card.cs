@@ -1,8 +1,19 @@
-﻿
+﻿using System;
+
 namespace ISU_Bridge
 {
     public class Card
     {
+
+        public static Face[] Suits {
+            get {
+                // https://stackoverflow.com/questions/3816718/how-to-get-an-array-of-all-enum-values-in-c
+                if (_suits == null)
+                    _suits = (Face[])Enum.GetValues(typeof(Face));
+                return _suits;
+            }
+        }
+        private static Face[] _suits;
 
         public enum Face
         {

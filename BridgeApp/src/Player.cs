@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 using BridgeApp;
 
 namespace ISU_Bridge
@@ -19,47 +20,87 @@ namespace ISU_Bridge
         public string Name { get; private set; }
         public Hand Hand { get; private set; }
         public Card ClickedCard { get; set; }
-        public bool IsHuman { get; set; }
+        public bool IsHuman { get; set; } = false;
         public int TricksWonInHand { get; set; } = 0;
 
         public int Index {
             get {
-                for (int i = 0; i < Table.Players.Count; i++)
-                {
-                    if (Table.Players[i] == this)
-                    {
-                        return i;
-                    }
-                }
-
-                // error
-                return -1;
+                return
+                    Name.Contains("North") ? 0 :
+                    Name == "East" ? 1 :
+                    Name == "South" ? 2 :
+                    Name == "West" ? 3 :
+                    -1;
             }
         }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="name">(sttring) Player's name</param>
         public Player(string name)
         {
             Hand = new Hand();
             Name = name;
         }
 
+        /// <summary>
+        /// Asks the current player for their bid.
+        /// </summary>
+        /// <param name="c">(Contract) Contract being bidded on</param>
         public abstract void QueryBid(Contract c);
 
+        /// <summary>
+        /// Picks a card to play.
+        /// </summary>
         public abstract void PickCard();
 
+        /// <summary>
+        /// Outputs the player's name
+        /// </summary>
+        /// <returns>(string) Player's name</returns>
         public override string ToString()
         {
             return Name == null ? "" : Name;
         }
     }
 
+
     public class AI_Player : Player
     {
 
-        public AI_Player(string name) : base(name) { IsHuman = false; }
+        private static readonly Random random = new Random();
+        private Contract contract;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="name">(string) Player's name</param>
+        public AI_Player(string name) : base(name) { 
+            IsHuman = false; 
+        }
+
+        /// <summary>
+        /// Places a bid, if it's this player's turn.
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="src">(object) Event source</param>
+        /// <param name="e">(ElapsedEventArgs) Eventt data</param>
+        private void Bid(object src, ElapsedEventArgs e)
+        {
+            // Need to double check that it's still this player's turn, as the timer was causing issues.
+            if (!(contract is null) && contract.NumPassed < 4 && Table.CurrentPlayer == this) DetermineBid(contract);
+        }
+
+        /// <summary>
+        /// Asks the player for their bid, after a randomized amount of time.
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="c">(Contract) Contract being bidded on</param>
         public override void QueryBid(Contract c)
         {
-            DetermineBid(c);
+            contract = c;
+            new DelayedFunction(random.Next(600, 901), Bid, this);
         }
 
         /// <summary>
@@ -70,7 +111,7 @@ namespace ISU_Bridge
         private int CountHand()
         {
             int score = 0;
-            foreach(Card c in this.Hand.Cards)
+            foreach(Card c in Hand.Cards)
             {
                 if (c.Number == 14) // if ace
                 {
@@ -103,6 +144,9 @@ namespace ISU_Bridge
             (Card.Face, int) hearts = (Card.Face.Hearts, 0);
             (Card.Face, int) spades = (Card.Face.Spades, 0);
             (Card.Face, int) clubs = (Card.Face.Clubs, 0);
+
+            // Need to double check that it's still this player's turn, as the timer was causing issues.
+            if (Table.CurrentPlayer != this) return clubs;
             
             foreach (Card c in Hand.Cards)
             {
@@ -136,7 +180,7 @@ namespace ISU_Bridge
                     place = i;
                 }
             }
-            return suits[place];
+            return place > -1 ? suits[place] : suits[0];
         }
 
         /// <summary>
@@ -146,9 +190,24 @@ namespace ISU_Bridge
         /// <param name="c"></param>
         public void DetermineBid(Contract c)
         {
+            // Checking for empty hand, had this throw an exception earlier.
+            if (Hand.Cards.Count < 1)
+            {
+                if (Game.debugging) BridgeConsole.Log(this.Name + " tried bidding with an empty hand.");
+                return;
+            }
+
+            // Need to double check that it's still this player's turn, as the timer was causing issues.
+            if (Table.CurrentPlayer != this) return;
+
             // https://www.wikihow.com/Bid-in-Bridge
             int score = CountHand();
+
             (Card.Face, int) high = DetermineHighestSuit();
+
+            // If 0, they had no cards in hand.
+            if (high.Item2 == 0) return;
+
             if (score < 13)
             {
                 MainWindow.Instance.Bid.Pass();
@@ -198,13 +257,29 @@ namespace ISU_Bridge
         /// </summary>
         public override void PickCard()
         {
+            new DelayedFunction(IsHuman ? 0 : random.Next(600, 901), PlayCard, this);
+        }
+
+        /// <summary>
+        /// Finds and plays a card.
+        /// </summary>
+        /// <param name="src">(object) Event source</param>
+        /// <param name="e">(ElapsedEventArgs) Event data</param>
+        private void PlayCard(object src, ElapsedEventArgs e)
+        {
+            // Need to double check that it's still this player's turn, as the timer was causing issues.
+            if (Table.CurrentPlayer != this) return;
+
             List<Card> options = Hand.PlayableCards();
             Card c = NullCard.Instance;
+            // AI-controlled player chooses a card
             if (!IsHuman)
             {
                 int index = DetermineBestCard(options);
+                if (index == -1) return;
                 c = options[index];
             }
+            // Dummy (South) clicked a card
             else
             {
                 bool found = false;
@@ -215,10 +290,10 @@ namespace ISU_Bridge
                 if (found) c = ClickedCard;
                 else if (Game.debugging) BridgeConsole.Log("User clicked on illegal card.");
             }
-            if (c != NullCard.Instance)
+            // Verifying a (legal) card was picked. Attempting to play it.
+            if (c != NullCard.Instance && Table.SetCardPlayed(c, this.Index))
             {
                 Hand.Play(c);
-                Table.CardsPlayed[Table.CurrentPlayerIndex] = c;
                 if (Game.debugging) BridgeConsole.Log(Table.CurrentPlayer.Name + " played " + c.ToString());
                 Table.Game.UpdateCardPlayed();
             }
@@ -232,7 +307,14 @@ namespace ISU_Bridge
         /// <returns></returns>
         public int DetermineBestCard(List<Card> cards)
         {
+            // Need to double check that it's still this player's turn, as the timer was causing issues.
+            if (Table.CurrentPlayer != this) return -1;
+
             (Card.Face, int) high = DetermineHighestSuit();
+
+            // 0 means there are no cards in hand
+            if (high.Item2 == 0) return - 1;
+
             int max = 0;
             int index = -1;
             for (int i = 0; i < cards.Count(); i++)
@@ -267,6 +349,10 @@ namespace ISU_Bridge
     public class Real_Player : Player
     {
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="name">(string) Player's name</param>
         public Real_Player(string name) : base(name) { IsHuman = true; }
 
         public override void QueryBid(Contract c)
@@ -276,17 +362,18 @@ namespace ISU_Bridge
 
         public override void PickCard()
         {
+            if (Table.CurrentPlayer != this)
+            {
+                if (Game.debugging) BridgeConsole.Log(Table.CurrentPlayer.Name + " tried playing on another user's turn.");
+                return;
+            }
             List<Card> playable = Hand.PlayableCards();
             bool found = false;
-            foreach (Card c in playable)
-            {
-                if (ClickedCard == c) { found = true; }
-            }
-            if (found)
+            foreach (Card c in playable) if (ClickedCard == c) found = true;
+            if (found && Table.SetCardPlayed(ClickedCard, this.Index))
             {
                 Hand.Play(ClickedCard);
-                Table.CardsPlayed[Index] = ClickedCard;
-                BridgeConsole.Log(Table.CurrentPlayer.Name + " played " + ClickedCard.ToString());
+                if (Game.debugging) BridgeConsole.Log(Table.CurrentPlayer.Name + " played " + ClickedCard.ToString());
                 Table.Game.UpdateCardPlayed();
             }
         }

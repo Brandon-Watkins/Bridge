@@ -99,8 +99,9 @@
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="txtWaiting" Text="Waiting for bid from player...: " HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0"/>
             <TextBlock x:Name="txtHighestBid" Text="Highest bid: " HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1"/>
-            <Button x:Name="btnBid" Content="Bid" Grid.Row="1" Grid.Column="0" Click="Bid_Click"/>
-            <Button x:Name="btnPass" Content="Pass" Grid.Row="1" Grid.Column="1" Click="Pass_Click"/>
+            <!--<Button x:Name="btnBid" Content="Bid" Grid.Row="1" Grid.Column="0" Click="Bid_Click"/>
+            <Button x:Name="btnPass" Content="Pass" Grid.Row="1" Grid.Column="1" Click="Pass_Click"/>-->
+            <Button x:Name="btnPass" Content="Pass" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Click="Pass_Click"/>
         </Grid>
     </Grid>
 </Window>

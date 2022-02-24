@@ -1,4 +1,5 @@
-﻿
+﻿using System.Collections.Generic;
+
 namespace ISU_Bridge
 {
     public class Contract
@@ -9,6 +10,12 @@ namespace ISU_Bridge
         public int NumTricks { get; set; }
         public int NumPassed { get; private set; }
         public bool HasOneBid { get; private set; } = false;
+        public List<(string player, string bid)> BidHistory { get; private set; } = new List<(string, string)>();
+
+        public Contract()
+        {
+            BidHistory = new List<(string, string)>();
+        }
         
         /// <summary>
         /// 
@@ -25,34 +32,46 @@ namespace ISU_Bridge
             NumTricks = 0;
             NumPassed = 0;
             HasOneBid = false;
+            BidHistory = new List<(string, string)>();
             return this;
         }
 
         /// <summary>
-        /// 
+        /// Updates the contract with the bid's information, and resets the "passed" counter.
         /// Brandon Watkins
         /// </summary>
-        /// <param name="player"></param>
-        /// <param name="suit"></param>
-        /// <param name="bidValue"></param>
-        /// <returns></returns>
-        public Contract Bid(int playerIndex, Card.Face suit, int bidValue)
+        /// <param name="playerIndex">(int) Bidder's index</param>
+        /// <param name="suit">(Card.Face) Bid's suit</param>
+        /// <param name="bidValue">(int) Bid's value</param>
+        /// <param name="playerName">(string) Bidder's name</param>
+        /// <returns>(Contract) This contract</returns>
+        public Contract Bid(int playerIndex, Card.Face suit, int bidValue, string playerName = "")
         {
+            // Don't add additional bids if user managed to double-click quick enough.
+            if (playerName != "" && BidHistory.Count > 0 && BidHistory[BidHistory.Count - 1].player == playerName) return this;
+
             Player = playerIndex;
             Suit = suit;
             NumTricks = bidValue;
             NumPassed = 0;
             HasOneBid = true;
+            BidHistory.Add((playerName == "" ? playerIndex.ToString() : playerName, bidValue.ToString() + " " + 
+                (suit == Card.Face.NoTrump ? "No Trump" : suit.ToString())));
             return this;
         }
 
         /// <summary>
-        /// 
+        /// Updates the contract, increasing the number of "passes".
         /// Brandon Watkins
         /// </summary>
-        /// <returns></returns>
-        public Contract Pass()
+        /// <param name="playerName">(string) Passing player's name</param>
+        /// <returns>(Contract) This contract</returns>
+        public Contract Pass(string playerName = "")
         {
+            // Don't add additional bids if user managed to double-click quick enough.
+            if (playerName != "" && BidHistory.Count > 0 && BidHistory[BidHistory.Count - 1].player == playerName) return this;
+
+            if (playerName != "") BidHistory.Add((playerName, "Passed"));
             NumPassed++;
             return this;
         }
