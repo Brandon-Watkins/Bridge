@@ -11,6 +11,8 @@ namespace ISU_Bridge
         public int NumPassed { get; private set; }
         public bool HasOneBid { get; private set; } = false;
         public List<(string player, string bid)> BidHistory { get; private set; } = new List<(string, string)>();
+        public bool Doubled { get; private set; } = false;
+        public bool Redoubled { get; private set; } = false;
 
         public Contract()
         {
@@ -18,21 +20,23 @@ namespace ISU_Bridge
         }
         
         /// <summary>
-        /// 
+        /// Resets the contract.
         /// Brandon Watkins
         /// </summary>
-        /// <param name="dealer"></param>
-        /// <returns></returns>
+        /// <param name="dealer">(int) Dealer index</param>
+        /// <returns>(Contract) This contract</returns>
         public Contract Reset(int dealer = -1)
         {
-            //Player = dealer;
             if (dealer != -1) Player = dealer;
-            else Player = 0;
+            // Not ideal, but otherwise there's a risk of index errors, or incorrect player.
+            else Player = Table.DealerIndex;
             Suit = Card.Face.Hearts;
             NumTricks = 0;
             NumPassed = 0;
             HasOneBid = false;
             BidHistory = new List<(string, string)>();
+            Doubled = false;
+            Redoubled = false;
             return this;
         }
 
@@ -55,6 +59,8 @@ namespace ISU_Bridge
             NumTricks = bidValue;
             NumPassed = 0;
             HasOneBid = true;
+            Doubled = false;
+            Redoubled = false;
             BidHistory.Add((playerName == "" ? playerIndex.ToString() : playerName, bidValue.ToString() + " " + 
                 (suit == Card.Face.NoTrump ? "No Trump" : suit.ToString())));
             return this;

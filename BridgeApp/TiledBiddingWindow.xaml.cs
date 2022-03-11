@@ -102,7 +102,90 @@ namespace BridgeApp
 
         private void Help_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Help?");
+            new MainWindow.CustomMessageBox(@"
+BIDDING
+
+Bidding is your primary (only, even) means of communicating with your partner. The purpose of bidding is rather complicated, but it can be roughly broken down into the following:
+
+Purpose Of Opening Bids:
+1) Look for game
+2) Find a fit
+3) Compete for partscore
+4) Help on defense
+
+Purpose of Overcalls:
+1) Compete for partscore
+2) Telling partner which suit to lead with
+3) Obstruction – Making it more difficult for your opponent to win
+5) Finding game
+
+
+
+EVALUATING YOUR HAND
+
+All of your bids are going to be based on how many points your hand is worth. A simple way to evaluate your hand is to sum up your high-card points (HCP), and, with an unbalanced hand, your Distribution points (DP – either LSDP or SSDP, not both).
+
+HIGH-CARD POINTS
+Each of your face cards (also called honors) is worth the following points:
+Ace: 4 points
+King: 3 points
+Queen: 2 points
+Jack: 1 point
+All other cards are worth 0 points.
+
+DISTRIBUTION POINTS
+There are two techniques for counting your distribution points. Long Suit Distribution Points (LSDP), and Short Suit Distribution Points (SSDP). 
+
+LONG SUIT DISTRIBUTION POINTS
+Used when you have no idea what your partner’s hand is (In other words, you’re still finding a “fit” – trying to find a suit that you have 8+ combined cards in). Having more cards within a single suit is worth more points. Every card over a 4-card suit is worth a point:
+8-card suit: 4 points
+7-card suit: 3 points
+6-card suit: 2 points
+5-card suit: 1 point
+
+SHORT SUIT DISTRIBUTION POINTS
+Used once you and your partner have found a fit. Ideally, now that you have the 8 cards in a suit, you want to have minimal cards in the other suits – If you run out of cards in other suits, you can play the trump suit on a non-trump-suited lead, virtually guaranteeing that you win the trick. Thus, for each suit:
+Voids (zero cards in this suit): 5 points
+Singletons (a single card in this suit): 3 points
+Doubletons (exactly 2 cards in this suit): 1 point
+
+BALANCING SEAT POINTS
+The balancing seat is explained below, but when you are in the balancing seat, you should add 3 (artificial) points to your hand’s value. Just know, your partner needs to recall that you were in the balancing seat at the time, and should undercompensate their own hand’s value by 3 points, during their next bid. This is because it’s extremely likely that your partner has some decent cards, that they wouldn’t otherwise bid with – it isn’t worth letting the opponent take a cheap contract, because you might have a good shot at winning, or if nothing else, you can make it that much more difficult for your opponent to make the contract.
+
+
+
+BIDDING GUIDELINES
+
+For now, I’m going to leave this blank. I’ll update this as I improve the AI bidding functionality – No bidding strategies are going to do you any good, if the AI can’t interpret your bids, and vice versa.
+
+
+
+MISC TERMS
+
+MAKING GAME
+Winning the contract, and fulfilling it (winning the game).
+
+OPENING BID
+The initial bid (no other players have bid). You should generally pass if you have fewer than 13 HCP.
+
+OVERCALLS
+Bidding after your opponent has placed a bid. You should generally only overcall if you have 13 points, between HCP and balancing seat points.
+
+DOUBLE
+Calling Double is essentially saying that you don’t think the opponent is able to make the contract. When doubled, any points awarded and penalized are doubled.
+
+REDOUBLE
+Calling Redouble is doubling a double. In other words, points awarded and penalized are quadrupled.
+
+FINDING A FIT
+Finding a fit refers to you and your partner trying to find a suit that you have a combined total of 8+ cards in. Once found, you should purchase a contract with that suit. 
+
+BALANCED HAND
+Your hand is considered balanced if you have roughly the same number of cards from each suit. Your hand should have no voids or singletons, and at most 1 doubleton.
+
+BALANCING SEAT
+Also called the Pass Out Seat, this refers to the player directly before the player that placed the last bid (two players have passed, so if you pass, bidding ends). The balancing seat plays a crucial role. More often than not, if you’re anywhere remotely near being able to bid, you should bid anyway – It’s extremely likely that your partner has sufficient cards to support your bid, but not enough to justify them placing their own bid. 
+");
         }
 
         private void Bid_Click(object sender, RoutedEventArgs e)
@@ -142,8 +225,6 @@ namespace BridgeApp
             
             Application.Current.Dispatcher.Invoke(DispatcherPriority.Background,
                                           new Action(delegate { }));
-
-            Thread.Sleep(500);
         }
 
         public void SetPlayerGUI(Contract c)
@@ -286,7 +367,7 @@ namespace BridgeApp
 
         private void UpdateHighestBid(Contract c)
         {
-            this.Dispatcher.Invoke(() => txtHighestBid.Text = c.NumTricks == 0 ? "" : 
+            this.Dispatcher.Invoke(() => txtHighestBid.Text = c.NumTricks == 0 || c.Player < 0 || c.Player > 3 ? "" : 
                 "Highest Bid: " + c.NumTricks + " " + c.Suit.ToString() + " - " + Table.Players[c.Player].Name);
         }
 
@@ -297,8 +378,11 @@ namespace BridgeApp
         /// <param name="passed">(bool) true if the last player passed</param>
         private void UpdateWaiting(bool passed)
         {
-            string name = Table.Players[passed ? (Table.CurrentPlayerIndex + 1) % 4 : Table.CurrentPlayerIndex].Name;
-            this.Dispatcher.Invoke(() => txtWaiting.Text = "Waiting for bid from " + name);
+            // Can't remember why this was necessary, but it seems to be wrong/no longer working.
+            // Suspect it was an early attempt managing the game progressing turns between hands, where it should have paused until current player was properly reassigned.
+            //string name = Table.Players[passed ? (Table.CurrentPlayerIndex + 1) % 4 : Table.CurrentPlayerIndex].Name;
+            //this.Dispatcher.Invoke(() => txtWaiting.Text = "Waiting for bid from " + name);
+            this.Dispatcher.Invoke(() => txtWaiting.Text = "Waiting for bid from " + Table.Players[Table.CurrentPlayerIndex].Name);
         }
 
         /// <summary>

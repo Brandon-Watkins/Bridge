@@ -85,11 +85,37 @@ namespace ISU_Bridge
         /// Brandon Watkins
         /// </summary>
         /// <param name="src">(object) Event source</param>
-        /// <param name="e">(ElapsedEventArgs) Eventt data</param>
+        /// <param name="e">(ElapsedEventArgs) Event data</param>
         private void Bid(object src, ElapsedEventArgs e)
         {
             // Need to double check that it's still this player's turn, as the timer was causing issues.
             if (!(contract is null) && contract.NumPassed < 4 && Table.CurrentPlayer == this) DetermineBid(contract);
+
+            /*
+                Various websites that I used and found especially helpful, when learning bidding rules and strategies.
+                http://pi.math.cornell.edu/~belk/counting.htm 
+                http://pi.math.cornell.edu/~belk/forcing.htm 
+                http://pi.math.cornell.edu/~belk/opening.htm 
+                http://pi.math.cornell.edu/~belk/preempt.htm 
+                http://pi.math.cornell.edu/~belk/rebid.htm 
+                http://pi.math.cornell.edu/~belk/respond.htm  
+                http://pi.math.cornell.edu/~belk/respond2.htm 
+                http://pi.math.cornell.edu/~belk/respond3.htm 
+                http://pi.math.cornell.edu/~belk/respond4.htm 
+                http://pi.math.cornell.edu/~belk/rminor.htm 
+                http://pi.math.cornell.edu/~belk/compete.htm 
+                https://pi.math.cornell.edu/~belk/compete3.htm 
+                http://pi.math.cornell.edu/~belk/takeout.htm 
+                https://www.acbl.org/learn/ 
+                https://www.wikihow.com/Bid-in-Bridge 
+                https://bicyclecards.com/how-to-play/bridge/ 
+                https://en.wikipedia.org/wiki/Forcing_bid#:~:text=From%20Wikipedia%2C%20the%20free%20encyclopedia,over%20an%20intermediate%20opposing%20pass 
+                http://pi.math.cornell.edu/~belk/4thSuit.htm 
+                https://www.nofearbridge.com/bridge_bidding_cheat_sheet.pdf
+                https://www.acbl.org/video-library/#foogallery-23268/i:18/f:Bidding 
+                https://www.acbl.org/video-library/#foogallery-23268/i:69/f:Bidding 
+                https://www.60secondbridge.com/lessons/beginners-bridge/#:~:text=Short%20suit%20distribution%20points%3A%205,partnership%20has%20reached%20a%20fit.
+            */
         }
 
         /// <summary>

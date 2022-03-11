@@ -71,6 +71,7 @@ namespace ISU_Bridge
 
         /// <summary>
         /// Use this at the end of a trick, or other times you might need to cancel your active timers.
+        /// I don't believe I need this anymore.
         /// Brandon Watkins
         /// </summary>
         public static void ClearTimers()

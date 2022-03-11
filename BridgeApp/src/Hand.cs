@@ -7,7 +7,19 @@ namespace ISU_Bridge
     {
 
         public List<Card> Cards { get; set; }
-        public bool IsDummy { get; set; }
+        private bool _isDummy = false;
+        public bool IsDummy {
+            get => _isDummy;
+            set {
+                if (!value)
+                {
+                    IsVisible = false;
+                }
+                _isDummy = value;
+            }
+        }
+        // Needed because dummy hand isn't visible until after the first card has been played. Used for both the GUI, and to tell the AI whether it can "see" the cards.
+        public bool IsVisible { get; set; } = false;
 
         public Hand() : base()
         {

@@ -66,6 +66,7 @@ namespace BridgeApp
             ConsoleWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             if (Game.debugging) ConsoleWindow.Show();
 
+
             BuildArraysForDisplay();
             BuildArraysOfButtons();
 
@@ -260,7 +261,7 @@ namespace BridgeApp
             });
         }
 
-        /// Used to update the GUI with a sleep
+        /// Used to update the GUI
         /// </summary>
         public void RefreshWindow()
         {
@@ -276,8 +277,9 @@ namespace BridgeApp
             Dispatcher.PushFrame(frame);
             
             Application.Current.Dispatcher.Invoke(DispatcherPriority.Background,
-                                          new Action(delegate { }));
+                new Action(delegate { }));
 
+            // Unsure why this is necessary, but it isn't pausing at the end of a trick without this sleep.
             Thread.Sleep(500);
         }
 
@@ -298,7 +300,10 @@ namespace BridgeApp
             else if (!Game.Instance.IsBidding) {
                 if (Game.Instance.Contract.Player % 2 == 0)
                 {
-                    ShowHand(Table.Players[2].Hand.Cards, _southHandNames, _southButtons);
+                    // Don't show hand until after first card has been played
+                    if (Table.Players[2].Hand.IsVisible) ShowHand(Table.Players[2].Hand.Cards, _southHandNames, _southButtons);
+                    else ShowBacksOfCards(Table.Players[2].Hand.Cards, _southHandNames, _southButtons);
+
                     ShowBacksOfCards(Table.Players[1].Hand.Cards, _eastHandNames, _eastButtons);
                     ShowBacksOfCards(Table.Players[3].Hand.Cards, _westHandNames, _westButtons);
                 }
@@ -307,12 +312,18 @@ namespace BridgeApp
                     ShowBacksOfCards(Table.Players[2].Hand.Cards, _southHandNames, _southButtons);
                     if (Game.Instance.Contract.Player == 1)
                     {
-                        ShowHand(Table.Players[3].Hand.Cards, _westHandNames, _westButtons);
+                        // Don't show hand until after first card has been played
+                        if (Table.Players[3].Hand.IsVisible) ShowHand(Table.Players[3].Hand.Cards, _westHandNames, _westButtons);
+                        else ShowBacksOfCards(Table.Players[3].Hand.Cards, _westHandNames, _westButtons);
+
                         ShowBacksOfCards(Table.Players[1].Hand.Cards, _eastHandNames, _eastButtons);
                     }
                     else
                     {
-                        ShowHand(Table.Players[1].Hand.Cards, _eastHandNames, _eastButtons);
+                        // Don't show hand until after first card has been played
+                        if (Table.Players[1].Hand.IsVisible) ShowHand(Table.Players[1].Hand.Cards, _eastHandNames, _eastButtons);
+                        else ShowBacksOfCards(Table.Players[1].Hand.Cards, _eastHandNames, _eastButtons);
+
                         ShowBacksOfCards(Table.Players[3].Hand.Cards, _westHandNames, _westButtons);
                     }
                 }
@@ -927,7 +938,7 @@ After each rubber, each player's standing, plus (+) or minus (-), in even hundre
                 {
                     contractText += "N/S\n";
                     // Dummy
-                    Table.Players[2].Hand.IsDummy = true;
+                    Table.Dummy = Table.Players[2];
                     Table.Players[2].IsHuman = true;
                     // Resize South's hand to be same size as North's, because North is playing for both.
                     EnlargeSouthHand();
@@ -1190,6 +1201,18 @@ After each rubber, each player's standing, plus (+) or minus (-), in even hundre
             brush.GradientStops.Add(new GradientStop(Color.FromArgb(0, r, g, b), 1.0));
 
             return brush;
+        }
+
+        /// <summary>
+        /// Updates the game speed.
+        /// It adjusts the timer duration in DelayedFunctions, thereby adjusting the time between AI actions.
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="sender">(object) Game speed slider</param>
+        /// <param name="e">(RoutedPropertyChangedEventArgs) The "on change" event</param>
+        private void UpdateGameSpeed(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            Game.computerSpeedMultiplier = e.NewValue;
         }
     }
 }

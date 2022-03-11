@@ -12,7 +12,7 @@ namespace ISU_Bridge
         // true: displays logger, and shows all card faces.
         public static bool debugging = false;
         // Make sure to divide by this number, not multiply.
-        public static double computerSpeedMultiplier = 1.0; 
+        public static double computerSpeedMultiplier = 1.0;
 
         public Game()
         {
@@ -61,9 +61,8 @@ namespace ISU_Bridge
 
             if (debugging) BridgeConsole.Log("Bidding started...");
 
-            // Reset dummy hand
-            Table.Players[2].IsHuman = false;
-            for (int i = 1; i < 4; i++) Table.Players[i].Hand.IsDummy = false;
+            // Dummy - Reset dummy hand
+            Table.Dummy = null;
 
             Table.SetPlayer(Table.DealerIndex);
 
@@ -139,12 +138,12 @@ namespace ISU_Bridge
             else
             {
                 // Show the scoreboard (it can't be clicked on once the messagebox pops up)
-                MainWindow.Instance.ScoreboardWindow.Show();
-                MessageBoxResult result = MessageBox.Show("Game Over!" + ((Table.Scoreboard.T1total > Table.Scoreboard.T2total) ? 
+                MainWindow.Instance.Dispatcher.Invoke(() => MainWindow.Instance.ScoreboardWindow.Show());
+                MessageBoxResult result = MessageBox.Show("Game Over!" + ((Table.Scoreboard.T1Total > Table.Scoreboard.T2Total) ? 
                     " You Win!" : 
                     " You Lose...") + "\nPlay Again?", "Bridge", MessageBoxButton.YesNo);
                 // Hide the scoreboard again, in preparation for closing/restarting the game.
-                MainWindow.Instance.ScoreboardWindow.Hide();
+                MainWindow.Instance.Dispatcher.Invoke(() => MainWindow.Instance.ScoreboardWindow.Hide());
                 switch (result)
                 {
                     case MessageBoxResult.Yes:
@@ -197,8 +196,8 @@ namespace ISU_Bridge
 
             if (Table.CurrentPlayer.Hand.Cards.Count > 0)
             {
-                // Cancels any active timers, so all players are able to play again.
-                DelayedFunction.ClearTimers();
+                // Cancels any active timers, so all players are able to play again. - I don't believe I need this, anymore.
+                //DelayedFunction.ClearTimers();
                 MainWindow.Instance.DisplayAllCards();
                 if (!IsPlayersTurn())
                 {
@@ -233,21 +232,30 @@ namespace ISU_Bridge
             int high_scorer = -1;
             int best_score = 0;
             int count = 0;
+            if (!Table.IsTrickLegal())
+            {
+                ResumePlay();
+                return;
+            }
             foreach (Card c in Table.CardsPlayed)
             {
                 // This is handling situations where someone wins a game, plays a card, and then Process Trick is
                 // called again, resulting in only 1 player in the trick.
-                if (c == NullCard.Instance)
+                /*if (c == NullCard.Instance)
                 {
                     UpdateCardPlayed();
                     return;
-                }
+                }*/
 
                 int card_score = 0;
-                card_score += (c.Suit == Table.TrumpSuit) ? 1000 : 0;
-                card_score += (c.Suit == Table.CardsPlayed[Table.LeadPlayerIndex].Suit) ? 100 : 0;
+                card_score += c.Suit == Table.TrumpSuit ? 1000 : 0;
+                card_score += c.Suit == Table.CardsPlayed[Table.LeadPlayerIndex].Suit ? 100 : 0;
                 card_score += c.Number;
-                if (card_score > best_score) { best_score = card_score; high_scorer = count; }
+                if (card_score > best_score)
+                {
+                    best_score = card_score;
+                    high_scorer = count;
+                }
                 count++;
             }
             Table.Players[high_scorer].TricksWonInHand++;
@@ -255,9 +263,9 @@ namespace ISU_Bridge
 
             Table.IsTrickComplete(Table.Players[high_scorer]);
 
-            // Ensures the game shows the last card played for half a second before clearing the cards.
             MainWindow.Instance.DisplayAllCards();
 
+            // Ensures the game shows the last card played for half a second before clearing the cards.
             new DelayedFunction(500, DelayedPrepTrick, this);
         }
 

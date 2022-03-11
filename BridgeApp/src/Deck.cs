@@ -16,8 +16,6 @@ namespace ISU_Bridge
         /// <param name="hands">The hands that are being dealt to</param>
         public void Initialize(List<Hand> hands)
         {
-            foreach (Hand hand in hands) hand.IsDummy = false;
-
             Build();
             Shuffle();
             Deal(hands);

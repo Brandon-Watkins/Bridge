@@ -16,178 +16,118 @@ namespace ISU_Bridge
         private Team _biddingTeam;
 
         public bool MatchOver { get; set; } = false;
-        public int[] T1gamescore { get; set; } = new int[3] { 0, 0, 0 };
-        public int[] T2gamescore { get; set; } = new int[3] { 0, 0, 0 };
-        public int T1bonus { get; set; } = 0;
-        public int T2bonus { get; set; } = 0;
-        public int T1total { get; set; } = 0;
-        public int T2total { get; set; } = 0;
+        public int[] T1GameScore { get; set; } = new int[3] { 0, 0, 0 };
+        public int[] T2GameScore { get; set; } = new int[3] { 0, 0, 0 };
+        public int T1Bonus { get; set; } = 0;
+        public int T2Bonus { get; set; } = 0;
+        public int T1Total { get; set; } = 0;
+        public int T2Total { get; set; } = 0;
         
         public void HandOver()
         {
             _trumpSuit = Game.Instance.Contract.Suit;
-            _tricksToWin = Game.Instance.Contract.NumTricks;
-            Table.Teams[0].CalculateTricksWon();
-            Table.Teams[1].CalculateTricksWon();
-            int winner = DetermineWinnerOfHand();
-            if (Table.Teams[winner] == _biddingTeam)
+            _tricksToWin = Game.Instance.Contract.NumTricks + 6;
+            _doubled = Game.Instance.Contract.Doubled;
+            _redoubled = Game.Instance.Contract.Redoubled;
+            Table.NorthSouth.CalculateTricksWon();
+            Table.EastWest.CalculateTricksWon();
+            Team winner = DetermineWinnerOfHand();
+            if (winner == _biddingTeam)
             {
                 int addGameScore = CalculateGameScore();
-                int addBonus = CalculateOverTricksAndBonus(_biddingTeam.TricksWon, Table.Teams[winner]);
-                if (winner == 0)
+                int addBonus = CalculateOverTricksAndBonus();
+                if (winner == Table.NorthSouth)
                 {
-                    T1gamescore[_currentGame - 1] += addGameScore;
-                    T1bonus += addBonus;
+                    T1GameScore[_currentGame - 1] += addGameScore;
+                    T1Bonus += addBonus;
                 }
                 else
                 {
-                    T2gamescore[_currentGame - 1] += addGameScore;
-                    T2bonus += addBonus;
+                    T2GameScore[_currentGame - 1] += addGameScore;
+                    T2Bonus += addBonus;
                 }
             }
             else
             {
-                int addScore = CalculateUnderTricks(_biddingTeam.TricksWon, _biddingTeam.IsVulnerable);
-                if (winner == 0)
-                {
-                    T1bonus += addScore;
-                }
-                else
-                {
-                    T2bonus += addScore;
-                }
+                int addScore = CalculateUnderTricks();
+                if (winner == Table.NorthSouth) T1Bonus += addScore;
+                else T2Bonus += addScore;
             }
-            T1total = T1gamescore[0] + T1gamescore[1] + T1gamescore[2] + T1bonus;
-            T2total = T2gamescore[0] + T2gamescore[1] + T2gamescore[2] + T2bonus;
+            T1Total = T1GameScore[0] + T1GameScore[1] + T1GameScore[2] + T1Bonus;
+            T2Total = T2GameScore[0] + T2GameScore[1] + T2GameScore[2] + T2Bonus;
             MainWindow.Instance.ScoreboardWindow.Update(this);
-            if (winner == 0)
-            {
-                DetermineMatchOver(Table.Teams[winner], T1gamescore[_currentGame - 1]);
-            }
-            else
-            {
-                DetermineMatchOver(Table.Teams[winner], T2gamescore[_currentGame - 1]);
-            }
+
+            DetermineMatchOver(winner, (winner == Table.NorthSouth ? T1GameScore : T2GameScore)[_currentGame - 1]);
             DetermineGameOver();
         }
 
-        public int DetermineWinnerOfHand()
+        public Team DetermineWinnerOfHand()
         {
             if (Table.Game.Contract.Player % 2 == 0)
             {
-                _biddingTeam = Table.Teams[0];
-                if (_biddingTeam.TricksWon >= _tricksToWin + 6)
-                {
-                    return 0;
-                }
-                else
-                {
-                    return 1;
-                }
+                _biddingTeam = Table.NorthSouth;
+                if (_biddingTeam.TricksWon >= _tricksToWin) return Table.NorthSouth;
+                else return Table.EastWest;
             }
             else
             {
-                _biddingTeam = Table.Teams[1];
-                if (_biddingTeam.TricksWon >= _tricksToWin + 6)
-                {
-                    return 1;
-                }
-                else
-                {
-                    return 0;
-                }
+                _biddingTeam = Table.EastWest;
+                if (_biddingTeam.TricksWon >= _tricksToWin) return Table.EastWest;
+                else return Table.NorthSouth;
             }
         }
 
+        /// <summary>
+        /// Calculates the game score ("Below the line").
+        /// Brandon Watkins
+        /// </summary>
+        /// <returns>(int) "Below the line" game score</returns>
         public int CalculateGameScore()
         {
-            if (_trumpSuit == Card.Face.Diamonds || _trumpSuit == Card.Face.Clubs)
-            {
-                return _tricksToWin * 20;
-            }
-            else if (_trumpSuit == Card.Face.Hearts || _trumpSuit == Card.Face.Spades)
-            {
-                return _tricksToWin * 30;
-            }
-            else if (_trumpSuit == Card.Face.NoTrump)
-            {
-                return 40 + 30 * (_tricksToWin - 1);
-            }
+            int dif = _biddingTeam.TricksWon - 6;
+            if (_trumpSuit == Card.Face.Diamonds || _trumpSuit == Card.Face.Clubs) return dif * (_redoubled ? 80 : _doubled ? 40 : 20);
+            else if (_trumpSuit == Card.Face.Hearts || _trumpSuit == Card.Face.Spades) return dif * (_redoubled ? 120 : _doubled ? 60 : 30);
+            else if (_trumpSuit == Card.Face.NoTrump && dif > 0) return (_redoubled ? 160 : _doubled ? 80 : 40) + ((dif - 1) * (_redoubled ? 120 : _doubled ? 60 : 30));
+
             return 0;
         }
         
-        public int CalculateOverTricksAndBonus(int biddingTeamsTricks, Team winner)
+        public int CalculateOverTricksAndBonus()
         {
             int addToScore = 0;
-            //small slam
-            if (_tricksToWin == 12)
-            {
-                if (winner.IsVulnerable)
-                {
-                    addToScore = 750;
-                }
-                else
-                {
-                    addToScore = 500;
-                }
-            }
-            //grand slam
-            else if (_tricksToWin == 13)
-            {
-                if (winner.IsVulnerable)
-                {
-                    addToScore = 1000;
-                }
-                else
-                {
-                    addToScore = 1500;
-                }
-            }
-            
+            // Small slam
+            if (_tricksToWin == 12) addToScore = _biddingTeam.IsVulnerable ? 750 : 500;
+            // Grand slam
+            else if (_tricksToWin == 13) addToScore = _biddingTeam.IsVulnerable ? 1500 : 1000;
+
+            // Making double/redouble
+            addToScore += _doubled || _redoubled ? 50 : 0;
+
+            // Bonus points for winning 2/2 or 2/3 games is in DetermineMatchOver().
+
             //calculate overtricks
-            if (biddingTeamsTricks > _tricksToWin + 6)
-            {
-                int dif = biddingTeamsTricks - _tricksToWin - 6;
-                if (_trumpSuit == Card.Face.Diamonds || _trumpSuit == Card.Face.Clubs)
-                {
-                    addToScore += dif * 20;
-                }
-                else if (_trumpSuit == Card.Face.Hearts || _trumpSuit == Card.Face.Spades || _trumpSuit == Card.Face.NoTrump)
-                {
-                    addToScore += dif * 30;
-                }
-            }
+            int dif = _biddingTeam.TricksWon - _tricksToWin;
+            if (_trumpSuit == Card.Face.Diamonds || _trumpSuit == Card.Face.Clubs) addToScore += dif * 20;
+            else if (_trumpSuit == Card.Face.Hearts || _trumpSuit == Card.Face.Spades || _trumpSuit == Card.Face.NoTrump) addToScore += dif * 30;
+            
             return addToScore;
         }
 
         /// <summary>
-        /// Calculates the under trick points for the game.
+        /// Calculates the under trick penalty points for the game.
         /// Brandon Watkins
         /// </summary>
-        /// <param name="biddingTeamsTricks">(int) Tricks won by the declaring team</param>
-        /// <param name="vulnerable">(bool) True if the declaring team has won a game</param>
-        /// <returns>(intt) Points earned for this game</returns>
-        public int CalculateUnderTricks(int biddingTeamsTricks, bool vulnerable)
+        /// <returns>(int) Penalty points earned for this game</returns>
+        public int CalculateUnderTricks()
         {
-            int dif = _tricksToWin + 6 - biddingTeamsTricks;
+            int dif = _tricksToWin - _biddingTeam.TricksWon;
             int score = 0;
 
-            if (vulnerable)
+            if (_biddingTeam.IsVulnerable)
             {
-                if (_redoubled)
-                {
-                    score = 400;
-                    score += 600 * (dif - 1);
-                }
-                else if (_doubled)
-                {
-                    score = 200;
-                    score += 300 * (dif - 1);
-                }
-                else
-                {
-                    score = 100 * dif;
-                }
+                if (_redoubled) score = 400 + 600 * (dif - 1);
+                else if (_doubled) score = 200 + 300 * (dif - 1);
+                else score = 100 * dif;
             }
             else
             {
@@ -205,10 +145,7 @@ namespace ISU_Bridge
                     if (dif >= 3) score += 200;
                     if (dif > 3) score += 300 * (dif - 3);
                 }
-                else
-                {
-                    score = 50 * dif;
-                }
+                else score = 50 * dif;
             }
 
             return score;
@@ -216,22 +153,43 @@ namespace ISU_Bridge
 
         public void DetermineGameOver()
         {
-            if (T1gamescore[_currentGame - 1] >= 100)
+            if (T1GameScore[_currentGame - 1] >= 100)
             {
                 Table.NorthSouth.IsVulnerable = true;
                 _currentGame += 1;
             }
-            else if (T2gamescore[_currentGame - 1] >= 100)
+            else if (T2GameScore[_currentGame - 1] >= 100)
             {
                 Table.EastWest.IsVulnerable = true;
                 _currentGame += 1;
             }
         }
 
+        /// <summary>
+        /// Determines whether the winner has won 2 games. 
+        /// If so, it also awards the bonus points for winning.
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="winner">(Team) Winner of last/current hand</param>
+        /// <param name="score">(int) Winner's game score</param>
         public void DetermineMatchOver(Team winner, int score)
         {
             if (winner.IsVulnerable && score >= 100)
             {
+                // Bonus points for winning 2/2 or 2/3 games
+                int bonusScore = _currentGame == 2 ? 700 : 500;
+                if (winner == Table.NorthSouth)
+                {
+                    T1Bonus += bonusScore;
+                    T1Total = T1GameScore[0] + T1GameScore[1] + T1GameScore[2] + T1Bonus;
+                }
+                else
+                {
+                    T2Bonus += bonusScore;
+                    T2Total = T2GameScore[0] + T2GameScore[1] + T2GameScore[2] + T2Bonus;
+                }
+                MainWindow.Instance.ScoreboardWindow.Update(this);
+
                 MatchOver = true;
             }
         }

@@ -13,7 +13,7 @@ namespace ISU_Bridge
     public class Table: SimpleObservable
     {
         public static Card.Face TrumpSuit => Game.Instance.Contract.Suit;
-        public static Card[] CardsPlayed { get; set; } = new Card[4] { NullCard.Instance, NullCard.Instance, NullCard.Instance, NullCard.Instance };
+        public static Card[] CardsPlayed { get; private set; } = new Card[4] { NullCard.Instance, NullCard.Instance, NullCard.Instance, NullCard.Instance };
         public static int CurrentPlayerIndex { get; set; }
         public static int LeadPlayerIndex { get; set; }
         public static Player CurrentPlayer => Players[CurrentPlayerIndex];
@@ -22,9 +22,42 @@ namespace ISU_Bridge
         public static Scoreboard Scoreboard { get; set; }
         public static Team NorthSouth { get; private set; }
         public static Team EastWest { get; private set; }
-        public static List<Team> Teams { get; private set; } = new List<Team>() { NorthSouth, EastWest };
         public static int DealerIndex { get; private set; }
         public static Game Game => Game.Instance;
+        // I suspect I'll be accessing the dummy a lot, to both check whether or not it's a partner, and to see its hand.
+        // Seems logical to store this, instead of cycling through all players each time.
+        private static Player _dummy = null;
+        public static Player Dummy {
+            get => _dummy;
+            set {
+                if (_dummy != null) _dummy.Hand.IsVisible = false;
+                if (value != null) value.Hand.IsDummy = true;
+                else if (_dummy != null)
+                {
+                    _dummy.IsHuman = false;
+                    _dummy.Hand.IsDummy = false;
+                }
+                DummyHandIsVisible = false;
+                _dummy = value;
+            }
+        }
+        private static bool _dummyHandIsVisible = false;
+        public static bool DummyHandIsVisible {
+            get => _dummyHandIsVisible;
+            set {
+                // Only update if it's actually a new value.
+                if (_dummyHandIsVisible != value)
+                {
+                    if (_dummy != null)
+                    {
+                        _dummy.Hand.IsVisible = value;
+                        _dummyHandIsVisible = value;
+                    }
+                    // Not going to let it set it to true, unless there's actually a dummy.
+                    else _dummyHandIsVisible = false;
+                }
+            }
+        }
         // stopwatch is used to keep players from spamming method calls (ie. double clicking cards)
         private static Stopwatch stopwatch = Stopwatch.StartNew();
         private static Table _instance;
@@ -67,8 +100,7 @@ namespace ISU_Bridge
 
             NorthSouth = new Team(Players[0], Players[2]);
             EastWest = new Team(Players[1], Players[3]);
-            Teams[0] = NorthSouth;
-            Teams[1] = EastWest;
+
             Scoreboard = new Scoreboard();
 
             CardsPlayed = new Card[4] { NullCard.Instance, NullCard.Instance, NullCard.Instance, NullCard.Instance };
@@ -127,11 +159,12 @@ namespace ISU_Bridge
                 if (Game.debugging) BridgeConsole.Log(Players[playerIndex].Name + " tried playing a card, but already played a card this trick.");
                 if (cardsPlayed == 4)
                 {
+                    // If the trick is already concluded, send it back to Game to prep next trick.
                     if ((Instance.Tricks.Count > 0 && Instance.Tricks[Instance.Tricks.Count - 1].Player.Index == playerIndex) ||
                         CurrentPlayerIndex == playerIndex)
                     {
-                        Game.UpdateCardPlayed();
-                        return true;
+                        new DelayedFunction(100, DelayedUpdateCardPlayed, Instance);
+                        return false;
                     }
                 }
             }
@@ -139,22 +172,26 @@ namespace ISU_Bridge
             else if (Instance.Tricks.Count > 0 && (Instance.Tricks[Instance.Tricks.Count - 1].Player.Index + cardsPlayed) % 4 != playerIndex)
             {
                 if (Game.debugging) BridgeConsole.Log(Players[playerIndex].Name + " tried playing a card, but it isn't their turn.");
+                return false;
             }
-            // Requiring that there's 800 ms between turns, and 1600ms between turns from separate tricks.
+            // Requiring that there's 800 ms between turns, and 1600ms between turns from separate tricks (modified by game speed).
             // Need to extract this timer out to Game class, when I have time.
             else if (stopwatch.ElapsedMilliseconds < 850 / Game.computerSpeedMultiplier || 
                 (stopwatch.ElapsedMilliseconds < 1700 / Game.computerSpeedMultiplier && cardsPlayed == 0))
             {
                 if (Game.debugging) BridgeConsole.Log(Players[playerIndex].Name + " tried playing a card, but it's still on cooldown.");
-                Game.ResumePlay();
+                new DelayedFunction(100, DelayedResumePlay, Instance);
                 return false;
             }
             // Passed all checks, playing card.
             else
             {
-                if (Game.debugging) BridgeConsole.Log("Elapsed time (ms): " + stopwatch.ElapsedMilliseconds.ToString());
                 stopwatch.Restart();
                 CardsPlayed[playerIndex] = card;
+
+                // Show the dummy's hand, now that a card has been played.
+                DummyHandIsVisible = true;
+
                 return true;
             }
 
@@ -162,6 +199,28 @@ namespace ISU_Bridge
             new DelayedFunction(150, DelayedResetPlayerAndContinue, Instance);
 
             return false;
+        }
+
+        /// <summary>
+        /// Resumes game play after timer expires.
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="src">(object) Event source</param>
+        /// <param name="e">(ElapsedEventArgs) Event data</param>
+        private static void DelayedResumePlay(object src, ElapsedEventArgs e)
+        {
+            Game.ResumePlay();
+        }
+
+        /// <summary>
+        /// Updates current player and makes the game start ticking forward again, after timer expires.
+        /// Brandon Watkins
+        /// </summary>
+        /// <param name="src">(object) Event source</param>
+        /// <param name="e">(ElapsedEventArgs) Event data</param>
+        private static void DelayedUpdateCardPlayed(object src, ElapsedEventArgs e)
+        {
+            Game.UpdateCardPlayed();
         }
 
         /// <summary>
@@ -213,7 +272,7 @@ namespace ISU_Bridge
         /// Brandon Watkins
         /// </summary>
         /// <returns>(bool) true if all 4 players played a card</returns>
-        private static bool IsTrickLegal()
+        public static bool IsTrickLegal()
         {
             if (CardsPlayed.Length != 4)
             {
